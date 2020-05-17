@@ -669,8 +669,8 @@ pR2(logreg)
 #pass the Mcfadden R2 into the function to get fit estimate
 pseudoR_func <- function(pseudoR){
   if(pseudoR >= 0.5){print("very good fit")}
-  if(pseudoR >= 0.4 && pseudoR < 0.5) {print("good fit")}
-  if (pseudoR >= 0.2 && pseudoR < 0.4) {print("reasonsable fit")}
+  else if(pseudoR >= 0.4 && pseudoR < 0.5) {print("good fit")}
+  else if (pseudoR >= 0.2 && pseudoR < 0.4) {print("reasonsable fit")}
   else{print("try again")}
 }
 
