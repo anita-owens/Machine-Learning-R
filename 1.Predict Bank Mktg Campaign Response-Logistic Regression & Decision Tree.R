@@ -21,6 +21,10 @@ library(ggplot2)
 library(cowplot)
 library(tree)
 library(caret)
+library(rpart)
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
 
 # Customer response prediction using Logistic Regression
 
@@ -368,10 +372,10 @@ plot_grid(p4, p5, p6, p7, labels = c('D', 'E', 'F', 'G'))
 #####Univariate Analysis: Boxplots for important independent numeric variables  ######
 
 #age on y axis
-ggbi1 <- ggplot(data = bank_data, aes(x = job, y = age, fill = job))+geom_boxplot() + stat_summary(fun.y=mean, geom="point", shape=20, size=14, color="red", fill="red")
-ggbi2 = ggplot(data = bank_data, aes(x = marital, y = age, fill = marital))+geom_boxplot()
-ggbi3 = ggplot(data = bank_data, aes(x = housing, y = age, fill = housing))+geom_boxplot()
-ggbi4 = ggplot(data = bank_data, aes(x = default, y = age, fill = default))+geom_boxplot()
+ggbi1 <- ggplot(data = bank_data, aes(x = job, y = age, fill = job))+geom_boxplot() + stat_summary(fun=mean, geom="point", shape=20, size=14, color="red", fill="red")
+ggbi2 <- ggplot(data = bank_data, aes(x = marital, y = age, fill = marital))+geom_boxplot()
+ggbi3 <- ggplot(data = bank_data, aes(x = housing, y = age, fill = housing))+geom_boxplot()
+ggbi4 <- ggplot(data = bank_data, aes(x = default, y = age, fill = default))+geom_boxplot()
 
 plot_grid(ggbi1, ggbi2, ggbi3, ggbi4, labels = "AUTO")
 
@@ -613,7 +617,13 @@ vif(logreg)
 # multi-collinearity.
 
 #multicollinearity does not bias coefficients; it inflates their standard errors.
-# multicollinearity does not usually alter the interpretation of the coefficients of interest unless they lose statistical significance.
+# multicollinearity does not usually alter the
+#interpretation of the coefficients of interest
+#unless they lose statistical significance.
+
+#Rule of thumb for interpreting VIF value
+#if VIF of a variable is one, it means that it is
+#not correlated with any of the other variables.
 
 #poutcome and job has a high VIF, we will remove it from our model and run log regression again
 #to compare
@@ -713,23 +723,34 @@ head(pred)
 predicted <- round(pred) #>0.5 will convert to 1
 
 #contingency table
-contingency_tab <- table(predicted, test_data$target)
-contingency_tab 
+contingency_tab <- table(test_data$target, predicted)
+contingency_tab
 
 #sum the diagnals for the percentage accuracy classified
 sum(diag(contingency_tab))/sum(contingency_tab) *100
 
+# Confusion Matrix using the caret package to validate above
+caret::confusionMatrix(contingency_tab)
+
 #Our model leads 89% to correct predictions
+
 
 #Plot ROC Curve & calculate AUC area
 library(ROCR)
 
-pr <- prediction(pred, test_data$target)
+pr <- prediction(test_data$target, pred)
 prf <- performance(pr, measure = "tpr", x.measure = "fpr")
 
 plot(prf)
 
+#The ideal ROC curve hugs the top left corner, indicating a high true positive rate and a low false positive rate.
+
 auc <- performance(pr, measure = "auc")
+
+#The ROC helps to understand possible trade-offs
+
+######### Step 6: Cross-Validation #################
+
 
 
 #########Summary of Conclusions from Log Regression Model#################
@@ -841,6 +862,20 @@ text(tree_bank_nodur, pretty=0)
 # build the tree using the training set, and evaluate its performance on the
 # test data. The predict() function can be used for this purpose.
 
+
+
+#Let's use rpart package
+#train the classification tree model
+class_tree <- rpart(target ~ ., data = bank_train, method="class")
+
+# Draw the decision tree
+fancyRpartPlot(class_tree)
+
+#tree with no duration
+class_tree_b<- rpart(target ~ . -duration, data = bank_train, method="class")
+
+# Draw the decision tree
+fancyRpartPlot(class_tree_b)
 
 
 ################Step 3 : Evaluate Model Performance & Accuracy #############
