@@ -2,7 +2,6 @@
 
 
 
-
 ######Load libraries###########
 
 library(rpart)
@@ -67,7 +66,7 @@ library(lubridate)
 # returning or new visitor, a Boolean value indicating whether the date of the
 # visit is weekend, and month of the year.
 
-
+#Dataset found here:
 browseURL("https://archive.ics.uci.edu/ml/datasets/Online+Shoppers+Purchasing+Intention+dataset")
 
 
@@ -245,14 +244,13 @@ plot_grid(bi1, bi2, bi3, bi4, labels = "AUTO")
 # insights:
 
 
-#Observations
 
 
 ########### Examining Relationships through two-way cross tabulations ############
 
-# -We see that More managerial professionals responded to the campaign when compared to other professionals.
+#A purchase was made in 15% of all visits 
 tab <- table(dataset$revenue)
-prop.table(tab) #A purchase was made in 15% of all visits 
+prop.table(tab) 
 
 
 # 2-Way Cross Tabulation
@@ -301,7 +299,7 @@ CrossTable(dataset$month, dataset$revenue, digits=2, prop.c = FALSE,
 dataset %>%
   select_if(is.numeric) %>% 
   cor() %>% 
-    corrplot(type = "upper", insig = "blank", addCoef.col = "black", diag = TRUE)
+    corrplot(type = "upper", insig = "blank", diag = TRUE)
 # A lot of negative correlations but nothing significant
 
 
@@ -482,7 +480,7 @@ pseudoR_func(0.3148552)
 
 ########## Step 4: Individual coefficients significance and interpretation############################# 
 
-#library(coef.lmList)
+library(coef.lmList)
 
 summary(logreg)
 
@@ -493,9 +491,10 @@ summary(logreg)
 # Take a look at the odds - extract coefficients
 coefsex <- coef(logreg) %>% exp()%>% round(2)
 
+#put into a dataframe
 coefsexDF <- as.data.frame(coefsex)
 
-#attempts
+
 data.frame(matrix(unlist(coefsex), nrow=30, byrow=T))
 #coef(coefsex, augFrame = TRUE)
 
@@ -516,7 +515,7 @@ head(pred)
 predicted <- round(pred) #>0.5 will convert to 1
 
 #contingency table - create table for confusion matrix
-contingency_tab <- table(predicted, test_data$revenue)
+contingency_tab <- table(test_data$revenue, predicted)
 contingency_tab 
 
 #sum the diagnals for the percentage accuracy classified
@@ -524,9 +523,9 @@ sum(diag(contingency_tab))/sum(contingency_tab) *100
 # ---- Our model leads 88% to correct predictions
 
 #Calculate accuracy using Caret package
-#caret::confusionMatrix(contingency_tab)
+caret::confusionMatrix(contingency_tab)
 
-#########Summary of Signficant Variables from Log Regression Model#################
+#########Summary of Significant Variables from Log Regression Model#################
 
 # Positive correlation
 # -Visitor type is important
@@ -540,4 +539,48 @@ sum(diag(contingency_tab))/sum(contingency_tab) *100
 
 #We presumed weekend makes a difference, but it doesn't.
 
+########## ML Model 2: Random Forest #############
 
+#We use the same training data
+head(train_data)
+head(test_data)
+
+#load library and set seed
+library(randomForest)
+set.seed(98040)
+
+#model data
+(rf_mod <- randomForest(revenue ~ ., data=train_data, ntree=3000, importance = TRUE))
+rf_mod
+
+#variable importance
+importance(rf_mod)
+
+#The randomeForst package includes varImpPlot()
+# Plot of the most important variables
+varImpPlot(rf_mod, main="Variable Importance")
+
+
+library(qplots)
+
+#this works for the classes - 0 or 1
+heatmap(t(importance(rf_mod)[,1:2]), margins = c(10,10), main = "Variable importance")
+
+#Darker shades signify higher importance for the variable
+#column in differentiating a segment row.
+
+
+
+#This states that page values are more important
+#however, page value is an arbitrary value most
+#likely assigned by marketing or an analyst to measure website
+#performance.
+
+#For those who convert, month, exit rates,
+#bounce rates & product related duration
+#are most import variables.
+
+#This confirms a lot of what we saw in the logistic
+#regression model
+
+#No need to improve the model
