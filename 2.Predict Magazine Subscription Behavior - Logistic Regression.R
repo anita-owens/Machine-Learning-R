@@ -75,7 +75,17 @@ ggbi2 <- ggplot(data = subscribed, aes(x = factor(Gender), y = Age))+geom_boxplo
 gghist1 <- ggplot(data=subscribed, aes(x=Age)) +
   geom_histogram(fill = "lightblue", binwidth = 5, colour = "black") +
       geom_vline(aes(xintercept = median(Age)), linetype = "dashed") +
-    labs(title= "Distribution of Age")
+    labs(title= "Age variable follows a normal distribution")
+gghist1
+
+ggplot(data=subscribed, aes(x=Age)) +
+  geom_histogram(fill = "lightblue", binwidth = 5, color = "black") +
+      geom_vline(aes(xintercept = median(Age)), color = "red", linetype = "dashed") +
+    labs(title= "Normal distribution")
+
+
+describe(subscribed$Age)
+#Age is normally distributed
 
 ###Univariate Analysis: Bar plot for important categorical variables
 
@@ -173,8 +183,6 @@ subscribed %>%
 CrossTable(subscribed$age_bucket, subscribed$Subscribe, digits=2, prop.c = FALSE,
   prop.r = TRUE, prop.t = FALSE, chisq = FALSE, format = "SAS", expected = FALSE)
 #we see the highest subscription rates with the 1st bucket 40%
-
-
 
 
 #Save current df into 2nd dataframe

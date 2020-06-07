@@ -107,6 +107,10 @@ summary(df.anova)
 # 2. Normality plot - check if distribution is normal
 plot(df.anova, 2)
 
+# Check normality assumption by analyzing the model residuals
+# Create a QQ plot of residuals
+qqplot(residuals(df.anova))
+
 #We see that the sales differs by Promotion,
 # the model is statiscally significant
 #but we don't know

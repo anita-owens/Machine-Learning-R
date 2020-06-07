@@ -3,11 +3,12 @@
 # Abstract: The database was created with records of absenteeism at work from
 # July 2007 to July 2010 at a courier company in Brazil.
 
+#Can we predict who will miss work?
 
 browseURL("https://archive.ics.uci.edu/ml/datasets/Absenteeism+at+work")
 
 
-###### Data set Information ############3
+###### Data set Information ############
 # Attribute Information:
 # 
 # 1. Individual identification (ID)
@@ -194,19 +195,30 @@ round(res, 2)
 #Let's look at our target variable
 describe(df$hrs_absent)
 #The mean is 6.92 and the median is 3
+#Right-skew
 
 #Let's visualize in a histogram
+ggplot(data = df, aes(x = hrs_absent))+
+      geom_histogram(fill = "lightgreen", binwidth = 5, color = "black") +
+      geom_vline(aes(xintercept = median(hrs_absent)), color = "red", linetype = "dashed") +
+  labs(title= "Hours absent variable does not\nfollow a normal distribution",
+    x = "hours absent") +
+  theme(legend.position="none")
+#We have some extreme values on the high end but it's not that many 
+
 
 ggplot(data = df, aes(x = hrs_absent))+
-      geom_histogram(fill = "lightblue", binwidth = 5, colour = "black") +
-      geom_vline(aes(xintercept = median(hrs_absent), linetype = "dashed"))
-#We have some extreme values on the high end but it's not that many 
+      geom_histogram(fill = "lightgreen", binwidth = 5, color = "black") +
+      geom_vline(aes(xintercept = median(hrs_absent)), color = "red", linetype = "dashed") +
+  labs(title= "Right-skew",
+    x = "hours absent") +
+  theme(legend.position="none")
 
 #Which measure of central tendency should we use as our benchmark?
 #Due to the skew - i would normally go for median, but in this case
 #I will use average since I want to see the influence of the extreme values
 
-conversion_rate  <- 6.92
+mean_rate  <- 6.92
 
 #data frame grouped by absence reason
 absent_reason.df <- df %>% 
@@ -224,7 +236,7 @@ sum(absent_reason.df$total_count)
 #add highlight flag column
 absent_reason.df <- absent_reason.df %>% 
 mutate(highlight_flag =
-    ifelse(avg_absence_rate > conversion_rate, 1, 0))
+    ifelse(avg_absence_rate > mean_rate, 1, 0))
 
 #check results
 head(absent_reason.df$highlight_flag)
@@ -233,7 +245,7 @@ head(absent_reason.df$highlight_flag)
 ggplot(data=absent_reason.df, aes(x=reorder(absent_reason, avg_absence_rate), y=avg_absence_rate,
   fill = factor(highlight_flag))) +
   geom_bar(stat="identity") +
-  geom_hline(yintercept=conversion_rate, linetype="dashed", color = "black") +
+  geom_hline(yintercept=mean_rate, linetype="dashed", color = "black") +
   theme(axis.text.x = element_text(angle = 90)) +
   coord_flip() +
     scale_fill_manual(values = c('#595959', 'red')) +
@@ -297,4 +309,22 @@ p_value_wilcox < .05
 # of workers who miss hours but the avg time missed is relatively short
 # (3 hours or less)
 
-########## Baseline hours absent & compare against independent variables #############
+#######ML Model: Regression - Split dataset into development (train) and holdout (validation or test) sets#######
+glimpse(df)
+
+library(caTools)
+set.seed(123)
+
+## split the dataset into training and test samples at 70:30 ratio
+split <- sample.split(df$hrs_absent, SplitRatio = 0.7)
+train_data <- subset(df, split == TRUE)
+test_data <- subset(df, split == FALSE)
+
+## Check if distribution of partition data is correct for the development dataset
+prop.table(table(train_data$target))
+prop.table(table(test_data$target)) 
+
+# The prop.table output above confirms that the imbalanced dataset
+# characteristic that we saw in the original dataset is maintained at the same
+# proportions in the development and hold out samples as well. The training
+# dataset is now ready to build the model.

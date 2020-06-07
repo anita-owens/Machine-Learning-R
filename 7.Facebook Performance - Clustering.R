@@ -275,7 +275,7 @@ ggplot(fb_data, aes(x=comment, y=page_likes)) +
 
 
 
-###########What is the question we're trying to answer?############
+###########What is the question we're trying to answer?- Engagement############
 
 #What makes a post successful? This is a study of user behavior that will
 # most likely be shared with management or advertising agencies.
@@ -288,6 +288,9 @@ ggplot(fb_data, aes(x=comment, y=page_likes)) +
 # - Are there any characteristics we can use to gain reach?
 
 #Which KPI's should we use to measure engagement?
+      #These look at how well your ads and creatives appeal
+      #to your audience.
+
 
 #We don't have many performance metrics in the dataset
 #so we have to look at which KPI's measure user
@@ -296,9 +299,6 @@ ggplot(fb_data, aes(x=comment, y=page_likes)) +
     # -engaged users
     # -comment
     # -share
-
-
-
 
 ########### ML Method 1: Hclust ####################
 
@@ -470,7 +470,7 @@ fb_data_num <-  fb_data_num[,-2]
 str(fb_data_num)
 
 
-####### Step 1: Re-scale data and create K means cluster  ######
+####### Step 1: Re-scale data and create K means cluster - 4 centers  ######
 
 #original dataframe
 str(fb_data_num)
@@ -478,7 +478,7 @@ str(fb_data_num)
 #Now we need to rescale
 fb_scaled <- dist(fb_data_num, method = "euclidean")
 
-# Build a kmeans model
+# Build a kmeans model - start with 4 clusters
 kmeans_model <- kmeans(fb_scaled, centers = 4)
 
 # Extract the cluster assignment vector from the kmeans model
@@ -486,6 +486,15 @@ clust_kmeans_model <- kmeans_model$cluster
 
 # Create a new data frame appending the cluster assignment
 fb_data_num2 <- mutate(fb_data_num, cluster = clust_kmeans_model)
+
+# Calculate the size of each cluster
+count(fb_data_num2, cluster)
+#Cluster 2 only has 2 - 4 was probably too many clusters to begin with
+
+# Calculate the mean for each category
+fb_data_num2 %>% 
+  group_by(cluster) %>% 
+  summarise_all(list(mean))
 
 # Plot and color main KPIs using their cluster
 plot1 <- ggplot(fb_data_num2, aes(x = reach, y = engaged_users, color = factor(cluster))) +
@@ -539,12 +548,6 @@ plot(silhouette(pam_k3))
 #Avg silhouette width = 0.39
 #suggests that observations are borderline
 
-# Generate a k-means model using the pam() function with a k = 5
-pam_k5 <- pam(fb_data_num, k = 5)
-
-# Plot the silhouette visual for the pam_k5 model
-plot(silhouette(pam_k5))
-#Avg silhouette width = 0.47
 #Since it's closer to 1, suggests that the observations
 #are better matched to their cluster when k=3
 
@@ -569,23 +572,56 @@ summary(fb_mclust_mod)
 
 #We also see log-likelihood information which we can use to
 # compare models.
-#We try a 4 cluster solution
-fb_data_num_mc4 <- Mclust(fb_data_num, G=4)
+#We try a 3 cluster solution
+fb_data_num_mc3 <- Mclust(fb_data_num, G=3)
 
-summary(fb_data_num_mc4)
+summary(fb_data_num_mc3)
 
-#Forcing it to find 4 clusters resulted in quite a different model with lower log-likelihood, a
+#Forcing it to find 3 clusters resulted in quite a different model with lower log-likelihood, a
 #different multivariate pattern (diagonal, equal shape)
 #The clusters on first appearance look well-situated.
 #much better than the 1 cluster solution
 
 #Comparing models with BIC()
 #We compare the original cluster and 
-#4-cluster models using the Bayesian information criterion
+#3-cluster models using the Bayesian information criterion
 
-BIC(fb_mclust_mod, fb_data_num_mc4)
+BIC(fb_mclust_mod, fb_data_num_mc3)
 #The lower the value of the BIC, the better
 
 #Bic difference
-114048.74 - 80898.44
-#33150.3
+113723.13 - 80898.44
+#32824.69
+
+#3 clusters seem to work better
+
+######### ML Method 4: k-means revisited with 3 centers ############
+
+# Build a kmeans model - start with 4 clusters
+kmeans_model_3clus <- kmeans(fb_scaled, centers = 3)
+
+# Extract the cluster assignment vector from the kmeans model
+labels_3clus <- kmeans_model_3clus$cluster
+
+# Create a new data frame appending the cluster assignment
+fb_data_num_3clus <- mutate(fb_data_num, cluster = labels_3clus)
+
+# Calculate the size of each cluster
+count(fb_data_num_3clus, cluster)
+
+# Calculate the mean for each category
+fb_data_num_3clus %>% 
+  group_by(cluster) %>% 
+  summarise_all(list(mean))
+
+#We visualize the clusters.
+library(cluster)
+clusplot(fb_data, labels_3clus, color=TRUE, shade=TRUE, labels=4, lines=0, main = "K-means 3 cluster solution")
+#this shows the observations on a multi-dimensional scaling plot with group membership identified by the
+#ellipses.
+
+######## Summary of Insights #############
+
+# Although 3 clusters were more statistically sound,
+# it didn't lead to better insights than our original
+# hclust model.

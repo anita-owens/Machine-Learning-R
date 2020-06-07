@@ -548,8 +548,15 @@ CrossTable(bank_data$loan, bank_data$target, digits=2, prop.c = TRUE,
 
 
 #######ML Model 1: Logistic Regression: Split dataset into development (train) and holdout (validation or test) sets#######
-glimpse(bank_data)
+glimpse(bank_data$target)
 
+#factor target variable if needed
+#bank_data$target <- as.factor(bank_data$target)
+
+#check results
+#glimpse(bank_data$target)
+
+#import library and set seed for reproducibility
 library(caTools)
 set.seed(123)
 
@@ -625,7 +632,7 @@ vif(logreg)
 #if VIF of a variable is one, it means that it is
 #not correlated with any of the other variables.
 
-#poutcome and job has a high VIF, we will remove it from our model and run log regression again
+#poutcome and job have high VIF's, we will remove it from our model and run log regression again
 #to compare
 
 logreg_var_remov <- glm(target ~ . -poutcome -job, 
@@ -684,7 +691,7 @@ pseudoR_func <- function(pseudoR){
   else{print("try again")}
 }
 
-pseudoR_func(2.967856e-01)
+pseudoR_func(3.356671e-01)
 
 
 ########## Step 4: Individual coefficients significance and interpretation############################# 
@@ -734,22 +741,38 @@ caret::confusionMatrix(contingency_tab)
 
 #Our model leads 89% to correct predictions
 
+######### Step 6: Model Diagnostics - AUC #################
 
-#Plot ROC Curve & calculate AUC area
+#Plot ROC Curve & Calculate AUC area
 library(ROCR)
 
-pr <- prediction(test_data$target, pred)
+#ROC Curves are useful for comparing classifiers
+
+#check data structures first
+typeof(predicted)
+typeof(test_data$target)
+
+
+pr <- prediction(pred, test_data$target)
 prf <- performance(pr, measure = "tpr", x.measure = "fpr")
 
 plot(prf)
 
-#The ideal ROC curve hugs the top left corner, indicating a high true positive rate and a low false positive rate.
+#The ideal ROC curve hugs the top left corner, indicating a high
+#true positive rate and a low false positive rate.
 
+#The larger the AUC, the better the classifier
 auc <- performance(pr, measure = "auc")
+auc
 
-#The ROC helps to understand possible trade-offs
+# AUC is 0.9085254
+as.numeric(performance(pr, measure = "auc")@y.values)
 
-######### Step 6: Cross-Validation #################
+
+#now let's just plot the ROC and look at true positive vs false positive
+perf <- performance (pr, measure = 'tpr', x.measure = "fpr")
+plot(perf) + abline(a=0, b=1, col = 'red') # the red line is randomness
+
 
 
 
