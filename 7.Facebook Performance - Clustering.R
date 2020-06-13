@@ -29,6 +29,7 @@ library(VIM)
 library(gmodels)
 library(cluster)
 library(mclust)
+library(car)
 
 ######### Custom functions #########
 
@@ -100,30 +101,7 @@ dim(fb_data) #500 rows of data
 fb_data <- fb_data[complete.cases(fb_data),]
 dim(fb_data) #now we have 495 rows of data
 
-######### Explore Data: Correlation Matrix & Pairwise Scatterplot ##############
-
-#Just to get a sense of the data
-
-#subset dataframe to get just all numeric variables
-num_vars<- fb_data %>% 
-        select_if(is.numeric)
-head(num_vars)
-
-
-# Build Correlation Matrix structure:
-num_vars %>% 
-  cor() %>% 
-    corrplot(type = "upper", insig = "blank", diag = FALSE) #addCoef.col = "black")
-
-# create a pairwise scatterplot - too many variables to plot at once
-# fb_data%>%
-#   ggpairs()
-
-##Insights
-
-#lots of extreme values for certain variables
-#highly correlated variables - share, likes, interactions
-
+###### Explore Data: Data visualization ##############
 
 ##### Univariate Analysis: Barplots for important categorical variables (x) ######
 
@@ -274,31 +252,119 @@ ggplot(fb_data, aes(x=comment, y=page_likes)) +
   geom_smooth(method=lm)
 
 
+######### Explore Data: Correlation Matrix & Pairwise Scatterplot ##############
 
-###########What is the question we're trying to answer?- Engagement############
 
-#What makes a post successful? This is a study of user behavior that will
+#subset dataframe to get just all numeric variables
+num_vars<- fb_data %>% 
+        select_if(is.numeric)
+head(num_vars)
+
+
+# Build Correlation Matrix structure:
+num_vars %>% 
+  cor() %>% 
+    corrplot(type = "upper", insig = "blank", diag = FALSE) #addCoef.col = "black")
+
+# create a pairwise scatterplot - too many variables to plot at once
+# fb_data%>%
+#   ggpairs()
+
+##Insights from correlation matrix
+# -lots of extreme values for certain variables
+# -highly correlated variables - share, likes, interactions
+
+
+#Establish a baseline with linear regression
+linmod <- lm(page_likes ~ ., data = fb_data)
+summary(linmod)
+
+#1 coefficient not defined because of singularities
+#We need to address collinearity. Many significant variables.
+alias(lm(page_likes ~ ., data = fb_data))
+#interactions is highly correlated
+
+#remove interactions from the model
+linmodnoInt <- lm(page_likes ~ . -interactions, data = fb_data)
+summary(linmodnoInt)
+
+#Let's calcualte the VIF
+vif(linmodnoInt)
+
+#very high VIF's for:
+# reach
+# impressions
+# engaged_users
+# consumers
+# liked_imp
+# liked_reach
+# liked_engaged
+# commment
+# like
+# share
+
+linmodnocol <- lm(page_likes ~ Type + Category + Post.Month +
+  Post.Weekday + Post.Hour + Paid + consumptions, data = fb_data)
+
+summary(linmodnocol)
+
+#Let's calcualte the VIF
+vif(linmodnocol) # - much better no collinear variables
+
+####################### Target variable for modeling ####################
+
+#What is the question we're trying to answer?: 
+#----Have we successfully built our brand on Facebook?
+
+#Have our activities been successful? This is a study of user behavior that will
 # most likely be shared with management or advertising agencies.
-#So this is an issue of engagement. 
 
-#How do we define engagement?
+
+#Let's look at the current definitions of our KPI's.
+
+# 1. impressions: impressions measure the number of times your posts were seen.
+# That includes if one post was seen multiple times by a single user. 
+
+# 2. Page Likes: are the number of people that follow your brand on Facebook. They liked
+# your page or opted-in to be able to have your posts show up in their feed. You
+# can think of them as fans or subscribers.  Page Likes show your audience size on Facebook.
+# Over time, that number should be growing.
+
+# 3. Reach: Reach is an indication of the number of people who see your material on Facebook.
+
+# 4. Engaged Users: The number of people who engaged with your Page. Engagement includes any
+# click or story created.
+
+# 5. Page Consumptions:  Total number of clicks
+
+# 6. Interactions: The number of interactions (reactions, comments, shares)
+# during a selected time range. The interactions are shown on the day the post
+# they relate to was published.
+
 
 # -What posts are most likely to be engaging?
 # -What are the characteristics of an engaging post?
-# - Are there any characteristics we can use to gain reach?
-
-#Which KPI's should we use to measure engagement?
-      #These look at how well your ads and creatives appeal
-      #to your audience.
+# - Are there any characteristics we can use to gain reach
+# & therefore build our brand?
 
 
-#We don't have many performance metrics in the dataset
-#so we have to look at which KPI's measure user
-#behavior as our proxy for engagement:
-    # -page likes
-    # -engaged users
-    # -comment
-    # -share
+#What is our target variable for our modeling?
+
+# - we will use page likes as our target kpi >> engagement with brand
+# - we will also use interactions as our 2ndary kpi >> behavior customer
+# - will use reach as a 3rd kpi
+
+#try a new baseline model with the addt'l variables we removed earlier
+#we want to add reach and interactions
+linmodImproved <- lm(page_likes ~ Type + Category + Post.Month +
+  Post.Weekday + Post.Hour + Paid + consumptions + reach + interactions, data = fb_data)
+
+summary(linmodImproved)
+
+#Let's calcualte the VIF
+vif(linmodImproved) # - much better no collinear variables
+
+
 
 ########### ML Method 1: Hclust ####################
 
@@ -309,8 +375,12 @@ ggplot(fb_data, aes(x=comment, y=page_likes)) +
 #the daisy function in the cluster package works with mixing
 #data types by rescaling the values, so we can use euclidean distance
 
+dataset <- fb_data %>% 
+          select(Type, Category, Post.Month, 
+            Post.Weekday, Post.Hour, Paid,
+            consumptions, reach, interactions, page_likes)
 
-fb_data_dist <- daisy(fb_data) #works with mixed data types - we want to keep categorical variables in the dataset
+fb_data_dist <- daisy(dataset) #works with mixed data types - we want to keep categorical variables in the dataset
 
 #select first few rows/columns
 as.matrix(fb_data_dist) [1:5, 1:5]
@@ -348,30 +418,30 @@ plot(hcd)
 
 cor(cophenetic(fb_data_hc), fb_data_dist)
 
-# CPCC is interpreted similarly to Pearson's r. In this case, CPCC > 0.6 indicates
+# CPCC is interpreted similarly to Pearson's r. A CPCC > 0.6 indicates
 # a relatively strong fit, meaning the hierarchical tree represents the distances between
 # observations well. .60-.80 a strong relationship
 
-# Cor = 0.6061804
-#this suggests a strong fit
+# Cor = 0.5381611
+#However, in our case, the relationship isnt so strong, this suggests a medium fit!
 
 
 #We can see where the dendogram would be cut by overlaying its plot with rect.hclust(), specifying
 #the number of groups we want (k=...)
-#the dendogram suggests 3 or possibly 4 clusters
+#the dendogram suggests possibly 5 clusters
 #depending on height
 
 plot(fb_data_hc)
-rect.hclust(fb_data_hc, k=4, border="red")
+rect.hclust(fb_data_hc, k=5, border="red")
 
 #We obtain the assignment vector for observations using cutree()
-fb_data_hc_segment <- cutree(fb_data_hc, k=4)
+fb_data_hc_segment <- cutree(fb_data_hc, k=5)
 table(fb_data_hc_segment)
 #str(fb_data_hc_segment)
 
 #Groups 1 dominates the assignment, followed by
-#group 2 and group 3 only has 2 observations while
-#group 4 has 12. The clusters are not well-balanced.
+#groups 4 and 5, 3, & 2. The clusters are not well-balanced.
+#group 2 is the smallest clusters at 38 observations.
 
 
 
@@ -385,7 +455,15 @@ table(fb_data_hc_segment)
 hclust_segs <-seg_summ_function(fb_data, fb_data_hc_segment)
 hclust_segs
 
+seg_summ_function(dataset, fb_data_hc_segment)
+
 names(fb_data)
+
+#Category variable
+#1 - Link
+#2 - Photo
+#3 - Status
+#4 - Video
 
 table(fb_data$Paid)
 #0-unpaid
@@ -401,31 +479,28 @@ table(fb_data$Type) #how was type
 #Insights based on hclust ML algorithm:
 
 
-# Groups 3 stands out immediately as a 
-# type (2) post - photo that has the most reach,
-# impressions, engaged users, consumers, liked reach
-# comments, likes, shares & interactions of any other
-# segments - This is a paid segment - not really
+#Group 4 stands out at having the most reach 
+# type (2) post - photo that has the most reach
+# and average interactions and next to highest
+#consumptions and is an unpaid segment
+#if we care about audience reach for very little
+#money this segment should take care of that
+
+
+# Group 1 dominates in number of observations. It's an unpaid segment with
+# the most average page likes. Type is photo
+# This indicates that posting photos goes a long way in
+# engaging users with our FB page.
+
+
+# Groups 3 stands out immediately as having
+#the most interactions. Not really
 # actionable here because of the number of observations
-# this segment has
 
-#Group 5 stands out as having the most
-#impressions, consumptions, and 
-#liked impressions, liked engaged and
-# the 2nd most comments, likes, shares, &
-# interactions. This is also a type 2 post (photo)
-# This is unpaid segment
-
-# Group 1 dominates, but has the most uninteresting
-# characteristics.It's an unpaid segment with
-# mostly links and the lowest average
-#reach, engaged users, consumers, consumptions,
-#liked impressions, liked reach,
-#liked engaged, comments and likes.
-# While having the 2nd lowest impressions.
-
-#This segment is uninteresting. What should we do
-#with this information?
+#All segments indicate that the day of the week
+#the post lands on is important. Also that
+#photos tend to dominate the type of post that helps
+#us reach our branding goals.
 
 
 ######### ML Method 2: Mean-Based Clustering: kmeans() ############
@@ -443,11 +518,9 @@ table(fb_data$Type) #how was type
 #2 - Photo
 #3 - Status
 #4 - Video
-
-fb_data_num <- fb_data
   
 
-  fb_data_num <- fb_data_num %>% 
+  fb_data_num <- dataset %>% 
     mutate(type =
       case_when(
         Type == "Link" ~ 1,
@@ -465,21 +538,22 @@ table(fb_data_num$type)
 fb_data_num$type <- as.integer(fb_data_num$type) 
 
 #remove the type variable
-fb_data_num <-  fb_data_num[,-2] 
+fb_data_num <-  fb_data_num[,-1] 
 
+#check structure
 str(fb_data_num)
 
 
-####### Step 1: Re-scale data and create K means cluster - 4 centers  ######
+####### Step 1: Re-scale data and create K means cluster - 5 centers  ######
 
-#original dataframe
+#transformed dataframe from above
 str(fb_data_num)
 
 #Now we need to rescale
 fb_scaled <- dist(fb_data_num, method = "euclidean")
 
 # Build a kmeans model - start with 4 clusters
-kmeans_model <- kmeans(fb_scaled, centers = 4)
+kmeans_model <- kmeans(fb_scaled, centers = 5)
 
 # Extract the cluster assignment vector from the kmeans model
 clust_kmeans_model <- kmeans_model$cluster
@@ -489,7 +563,7 @@ fb_data_num2 <- mutate(fb_data_num, cluster = clust_kmeans_model)
 
 # Calculate the size of each cluster
 count(fb_data_num2, cluster)
-#Cluster 2 only has 2 - 4 was probably too many clusters to begin with
+#Cluster 2 only has 10 obs was probably too many clusters to begin with
 
 # Calculate the mean for each category
 fb_data_num2 %>% 
@@ -497,10 +571,10 @@ fb_data_num2 %>%
   summarise_all(list(mean))
 
 # Plot and color main KPIs using their cluster
-plot1 <- ggplot(fb_data_num2, aes(x = reach, y = engaged_users, color = factor(cluster))) +
+plot1 <- ggplot(fb_data_num2, aes(x = reach, y = consumptions, color = factor(cluster))) +
   geom_point()
 
-plot2 <- ggplot(fb_data_num2, aes(x = consumptions, y = engaged_users, color = factor(cluster))) +
+plot2 <- ggplot(fb_data_num2, aes(x = page_likes, y = consumptions, color = factor(cluster))) +
   geom_point()
 
 
@@ -529,8 +603,9 @@ ggplot(elbow_df, aes(x = k, y = tot_withinss)) +
   geom_line() +
   scale_x_continuous(breaks = 1:10)
 
-# Based on this plot, the k to choose is 3; the elbow
-# occurs there.
+# Based on this plot, the k to choose is 3 or 4 or 5; the elbow
+# occurs at 5 before it flattens out, but the first bend is at 3.
+
 
 
 ####### Step 3: Silhouette analysis: observation level performance ####
@@ -545,10 +620,16 @@ pam_k3 <- pam(fb_data_num, k = 3)
 
 # Plot the silhouette visual for the pam_k3 model
 plot(silhouette(pam_k3))
-#Avg silhouette width = 0.39
-#suggests that observations are borderline
 
-#Since it's closer to 1, suggests that the observations
+library(factoextra)
+fviz_silhouette(pam_k3) #print avg silhouette in table format
+
+#Group 1 appears to be well matched
+#Group 2 is borderline to not well-matched
+#Group 3 is borderline
+
+#However, the avg silhouette width = 0.54
+#suggests that observations are
 #are better matched to their cluster when k=3
 
 
@@ -568,7 +649,7 @@ plot(silhouette(pam_k3))
 fb_mclust_mod <- Mclust(fb_data_num)
 
 summary(fb_mclust_mod)
-#This tells us the data has 1 cluster - WTF!
+#This tells us the data has 8 clusters - WTF!
 
 #We also see log-likelihood information which we can use to
 # compare models.
@@ -577,10 +658,11 @@ fb_data_num_mc3 <- Mclust(fb_data_num, G=3)
 
 summary(fb_data_num_mc3)
 
-#Forcing it to find 3 clusters resulted in quite a different model with lower log-likelihood, a
-#different multivariate pattern (diagonal, equal shape)
+#Forcing it to find 3 clusters resulted in a more equally distributed model 
+# with lower log-likelihood, a
+# (ellipsoidal, equal shape) model with 3
+# components: 
 #The clusters on first appearance look well-situated.
-#much better than the 1 cluster solution
 
 #Comparing models with BIC()
 #We compare the original cluster and 
@@ -589,39 +671,46 @@ summary(fb_data_num_mc3)
 BIC(fb_mclust_mod, fb_data_num_mc3)
 #The lower the value of the BIC, the better
 
-#Bic difference
-113723.13 - 80898.44
-#32824.69
+#Bic difference is - -2211.86
+42952.97-45164.83
+#8 clusters seem to work better
 
-#3 clusters seem to work better
+######### ML Method 4: k-means revisited with 8 centers ############
 
-######### ML Method 4: k-means revisited with 3 centers ############
-
-# Build a kmeans model - start with 4 clusters
-kmeans_model_3clus <- kmeans(fb_scaled, centers = 3)
+# Build a kmeans model - start with 8 clusters
+kmeans_model_8clus <- kmeans(fb_scaled, centers = 8)
 
 # Extract the cluster assignment vector from the kmeans model
-labels_3clus <- kmeans_model_3clus$cluster
+labels_8clus <- kmeans_model_8clus$cluster
 
 # Create a new data frame appending the cluster assignment
-fb_data_num_3clus <- mutate(fb_data_num, cluster = labels_3clus)
+fb_data_num_8clus <- mutate(fb_data_num, cluster = labels_8clus)
 
 # Calculate the size of each cluster
-count(fb_data_num_3clus, cluster)
+count(fb_data_num_8clus, cluster)
 
 # Calculate the mean for each category
-fb_data_num_3clus %>% 
+fb_data_num_8clus %>% 
   group_by(cluster) %>% 
   summarise_all(list(mean))
 
 #We visualize the clusters.
 library(cluster)
-clusplot(fb_data, labels_3clus, color=TRUE, shade=TRUE, labels=4, lines=0, main = "K-means 3 cluster solution")
+clusplot(fb_data, labels_8clus, color=TRUE, shade=TRUE, labels=4, lines=0, main = "K-means 8-cluster solution")
 #this shows the observations on a multi-dimensional scaling plot with group membership identified by the
 #ellipses.
 
-######## Summary of Insights #############
+######## Final summary #############
 
-# Although 3 clusters were more statistically sound,
+
+# Compare methods - hclust vs. kmeans
+table(fb_data_hc_segment, kmeans_model_8clus$cluster)
+
+#our hclust model assigns most of the observations to cluster 1,
+# then 2, none, for 3, and 10 observations in cluster 4. We got a similar result from the kmeans.
+# the majority of observations were assigned to cluster 1, 11 observations
+# in cluster 3, and only 1 observation in cluster 2
+
+# Although 8 clusters were more statistically sound,
 # it didn't lead to better insights than our original
 # hclust model.
