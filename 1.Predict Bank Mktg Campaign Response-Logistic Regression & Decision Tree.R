@@ -792,6 +792,7 @@ plot(perf) + abline(a=0, b=1, col = 'red') # the red line is randomness
 #- some professions housemade, entrepreneur
 #-also if has credit currently in default with the bank
 #- number of contacts
+
     #The bank should limit the number of contacts it has with
     # a customer. What's most likely happening is that customers
     #may ignore communication from the bank if its gets too many.

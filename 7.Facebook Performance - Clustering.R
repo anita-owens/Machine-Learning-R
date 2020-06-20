@@ -239,15 +239,15 @@ ggplot(data = fb_data, aes(x = reach))+
       geom_histogram(fill = "lightblue", binwidth = 25, colour = "black") +
       geom_vline(aes(xintercept = median(reach), linetype = "dashed"))
 
-ggplot(fb_data, aes(x=page_likes, y=reach)) + 
+ggplot(fb_data, aes(page_likes, reach)) + 
   geom_point()+
   geom_smooth(method=lm)
 
-ggplot(fb_data, aes(x=page_likes, y=impressions)) + 
+ggplot(fb_data, aes(page_likes, impressions)) + 
   geom_point()+
   geom_smooth(method=lm)
 
-ggplot(fb_data, aes(x=comment, y=page_likes)) + 
+ggplot(fb_data, aes(comment, page_likes)) + 
   geom_point()+
   geom_smooth(method=lm)
 
@@ -261,14 +261,17 @@ num_vars<- fb_data %>%
 head(num_vars)
 
 
+
 # Build Correlation Matrix structure:
 num_vars %>% 
   cor() %>% 
-    corrplot(type = "upper", insig = "blank", diag = FALSE) #addCoef.col = "black")
+    corrplot(type = "upper", insig = "blank", diag = FALSE, addCoef.col = "grey")
 
 # create a pairwise scatterplot - too many variables to plot at once
 # fb_data%>%
 #   ggpairs()
+
+cor(num_vars)
 
 ##Insights from correlation matrix
 # -lots of extreme values for certain variables
@@ -299,7 +302,7 @@ vif(linmodnoInt)
 # liked_imp
 # liked_reach
 # liked_engaged
-# commment
+# commment - slightly high, but okay perhaps
 # like
 # share
 
@@ -380,9 +383,12 @@ dataset <- fb_data %>%
             Post.Weekday, Post.Hour, Paid,
             consumptions, reach, interactions, page_likes)
 
-fb_data_dist <- daisy(dataset) #works with mixed data types - we want to keep categorical variables in the dataset
+str(dataset)
 
-#select first few rows/columns
+#scale data using daisy function
+fb_data_dist <- daisy(dataset) #works with mixed data types if we wanted to keep categorical variables in the dataset
+
+#select first few rows/columns to check if scaling worked
 as.matrix(fb_data_dist) [1:5, 1:5]
 
 #the distances look reasonable(zeroes on the diagnol, symmetric, scaled[0,1])
@@ -398,9 +404,8 @@ fb_data_hc <- hclust(fb_data_dist, method = "complete")
 plot(fb_data_hc)
 
 # using dendrogram objects
-hcd = as.dendrogram(fb_data_hc)
-
-str(hcd) #check results
+hcd <- as.dendrogram(fb_data_hc)
+#str(hcd) #check results
 
 # alternative way to get a dendrogram
 plot(hcd)
@@ -423,26 +428,27 @@ cor(cophenetic(fb_data_hc), fb_data_dist)
 # observations well. .60-.80 a strong relationship
 
 # Cor = 0.5381611
-#However, in our case, the relationship isnt so strong, this suggests a medium fit!
+# However, in our case, the relationship isn't so strong,
+# this suggests a medium fit!
 
 
-#We can see where the dendogram would be cut by overlaying its plot with rect.hclust(), specifying
+#We can see where the dendogram would be cut
+#by overlaying its plot with rect.hclust(), specifying
 #the number of groups we want (k=...)
 #the dendogram suggests possibly 5 clusters
-#depending on height
 
 plot(fb_data_hc)
 rect.hclust(fb_data_hc, k=5, border="red")
 
 #We obtain the assignment vector for observations using cutree()
+#Basically, this means we need to get the cluster assignments
 fb_data_hc_segment <- cutree(fb_data_hc, k=5)
-table(fb_data_hc_segment)
-#str(fb_data_hc_segment)
+table(fb_data_hc_segment) #check assignments
+
 
 #Groups 1 dominates the assignment, followed by
 #groups 4 and 5, 3, & 2. The clusters are not well-balanced.
 #group 2 is the smallest clusters at 38 observations.
-
 
 
 #We will be able to answer the following questions:
@@ -452,12 +458,11 @@ table(fb_data_hc_segment)
 # 3-do we see immediately odd results such as a mean equal to the value of
 #   one data level?
 
+
+#check results of cluster assignments against dataset using custom function
 hclust_segs <-seg_summ_function(fb_data, fb_data_hc_segment)
 hclust_segs
 
-seg_summ_function(dataset, fb_data_hc_segment)
-
-names(fb_data)
 
 #Category variable
 #1 - Link
@@ -552,8 +557,8 @@ str(fb_data_num)
 #Now we need to rescale
 fb_scaled <- dist(fb_data_num, method = "euclidean")
 
-# Build a kmeans model - start with 4 clusters
-kmeans_model <- kmeans(fb_scaled, centers = 5)
+# Build a kmeans model - start with 5 clusters & nstart = 20
+kmeans_model <- kmeans(fb_scaled, centers = 5, nstart = 20)
 
 # Extract the cluster assignment vector from the kmeans model
 clust_kmeans_model <- kmeans_model$cluster
@@ -563,12 +568,14 @@ fb_data_num2 <- mutate(fb_data_num, cluster = clust_kmeans_model)
 
 # Calculate the size of each cluster
 count(fb_data_num2, cluster)
-#Cluster 2 only has 10 obs was probably too many clusters to begin with
+#Cluster 3 only has 11 obs was probably too many clusters to begin with
 
 # Calculate the mean for each category
 fb_data_num2 %>% 
   group_by(cluster) %>% 
   summarise_all(list(mean))
+
+#dev.off() --uncomment and run if there is a problem with plotting
 
 # Plot and color main KPIs using their cluster
 plot1 <- ggplot(fb_data_num2, aes(x = reach, y = consumptions, color = factor(cluster))) +
@@ -603,7 +610,7 @@ ggplot(elbow_df, aes(x = k, y = tot_withinss)) +
   geom_line() +
   scale_x_continuous(breaks = 1:10)
 
-# Based on this plot, the k to choose is 3 or 4 or 5; the elbow
+# Based on this plot, the k to choose is 3, the elbow
 # occurs at 5 before it flattens out, but the first bend is at 3.
 
 
@@ -625,12 +632,24 @@ library(factoextra)
 fviz_silhouette(pam_k3) #print avg silhouette in table format
 
 #Group 1 appears to be well matched
-#Group 2 is borderline to not well-matched
+#Group 2 is not well-matched
 #Group 3 is borderline
 
-#However, the avg silhouette width = 0.54
-#suggests that observations are
-#are better matched to their cluster when k=3
+#However, the avg silhouette width = 0.54 when k=3
+
+#Let's try again with 5 clusters
+# Generate a k-means model using the pam() function with a k = 5
+pam_k5 <- pam(fb_data_num, k = 5)
+
+# Plot the silhouette visual for the pam_k5 model
+plot(silhouette(pam_k5))
+
+library(factoextra)
+fviz_silhouette(pam_k5) #print avg silhouette in table format
+#average silhouette went down but Groups 1,3,5 are now better matched
+#2&4 are perhaps borderline
+
+##We continue on....
 
 
 ######### ML Method 3: Model-based Clustering Mclust() ############
@@ -653,32 +672,30 @@ summary(fb_mclust_mod)
 
 #We also see log-likelihood information which we can use to
 # compare models.
-#We try a 3 cluster solution
-fb_data_num_mc3 <- Mclust(fb_data_num, G=3)
+#We try a 5 cluster solution
+fb_data_num_mc5 <- Mclust(fb_data_num, G=5)
 
-summary(fb_data_num_mc3)
+summary(fb_data_num_mc5)
 
-#Forcing it to find 3 clusters resulted in a more equally distributed model 
-# with lower log-likelihood, a
-# (ellipsoidal, equal shape) model with 3
-# components: 
+#Forcing it to find 5 clusters resulted in a similar model 
+# with slightly lower log-likelihood, a
 #The clusters on first appearance look well-situated.
 
 #Comparing models with BIC()
 #We compare the original cluster and 
-#3-cluster models using the Bayesian information criterion
+#5-cluster models using the Bayesian information criterion
 
-BIC(fb_mclust_mod, fb_data_num_mc3)
+BIC(fb_mclust_mod, fb_data_num_mc5)
 #The lower the value of the BIC, the better
 
-#Bic difference is - -2211.86
-42952.97-45164.83
+#Bic difference is: -1803.56
+42952.97-44756.53
 #8 clusters seem to work better
 
 ######### ML Method 4: k-means revisited with 8 centers ############
 
 # Build a kmeans model - start with 8 clusters
-kmeans_model_8clus <- kmeans(fb_scaled, centers = 8)
+kmeans_model_8clus <- kmeans(fb_scaled, centers = 8, nstart = 20)
 
 # Extract the cluster assignment vector from the kmeans model
 labels_8clus <- kmeans_model_8clus$cluster
@@ -700,16 +717,17 @@ clusplot(fb_data, labels_8clus, color=TRUE, shade=TRUE, labels=4, lines=0, main 
 #this shows the observations on a multi-dimensional scaling plot with group membership identified by the
 #ellipses.
 
+#Cluster 6 stretches too wide.
+
 ######## Final summary #############
 
 
-# Compare methods - hclust vs. kmeans
+# Compare methods - hclust vs. kmeans with 8 clusters
 table(fb_data_hc_segment, kmeans_model_8clus$cluster)
 
-#our hclust model assigns most of the observations to cluster 1,
-# then 2, none, for 3, and 10 observations in cluster 4. We got a similar result from the kmeans.
-# the majority of observations were assigned to cluster 1, 11 observations
-# in cluster 3, and only 1 observation in cluster 2
+#Our hclust model assigns most of the observations to cluster 8,
+#in the 8 segment solution.
+
 
 # Although 8 clusters were more statistically sound,
 # it didn't lead to better insights than our original
