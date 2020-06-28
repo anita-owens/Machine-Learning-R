@@ -1,4 +1,4 @@
-############Customer response prediction using Logistic Regression & Regression Tree ################
+############Customer response prediction using Logistic Regression & Decision Trees ################
 
 # The classification goal is to predict if the client will subscribe (yes/no) a
 # term deposit (variable y).
@@ -820,6 +820,10 @@ folds <- createFolds(bank_data$target, k = 10)
 #peek at the results
 str(folds)
 
+######### Step 7: Variable Importance #################
+#Let's look at the abasolute value of the t-statistic for
+#each model parameter using caret package
+varImp(model_03_logreg)
 
 #########Summary of Conclusions from Log Regression Model#################
 
