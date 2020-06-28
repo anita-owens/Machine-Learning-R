@@ -2,23 +2,39 @@
 
 #Dataset from IBM Watson Community
 
+# Context Using Watson Analytics, you can predict behavior to retain your
+# customers. You can analyze all relevant customer data and develop focused
+# customer retention programs.
+#
+# Inspiration Understand customer demographics and buying behavior. Use
+# predictive analytics to analyze the most profitable customers and how they
+# interact. Take targeted actions to increase profitable customer response,
+# retention, and growth.
+#
+# Source
+# https://www.ibm.com/communities/analytics/watson-analytics-blog/marketing-customer-value-analysis/
+
 #####load libraries ######
 
 library(multcomp)
 library(tidyverse)
 library(cowplot)
+library(VIM)
+library(ggcorrplot)
+library(car)
 
 ###### Data Import #############
 
 df<-read.csv("https://raw.githubusercontent.com/pthiagu2/DataMining/master/WA_Fn-UseC_-Marketing-Customer-Value-Analysis.csv")
-
-View(df)
+#View(df)
 
 #Check response variable
 table(df$Response)
 
 #Encode engaged customers as 0s and 1s
 df$engaged <- as.integer(df$Response) - 1
+
+table(df$engaged) #check results
 
 ########### Check Data #################
 
@@ -57,12 +73,10 @@ names(df)
 df[!complete.cases(df),] #no missing
 
 #using aggr function from VIM packages --missing values are in red
-aggr(df, prop = F, numbers = T)
+#aggr(df, prop = F, numbers = T)
 #nothing missing
 
 ###### Explore Data: Data visualization ##############
-
-
 
 ##### Univariate Analysis: Barplots for important categorical variables (x) ######
 
@@ -94,27 +108,19 @@ bar6 <- ggplot(df, aes(x=factor(location)))+
 plot_grid(bar1, bar2, bar3, bar4, bar5,
   bar6, labels = "AUTO")
 
-
-
-
-
-
-
 ########## Check for normality ##########
 
 #from car package
 powerTransform(engaged ~ ., data = df)
 
-
 #QQ Plots for numeric variables
-qqPlot(df$CLV) # not normal
+#qqPlot(df$CLV) # not normal
 
-qqPlot(df$Income)
+#qqPlot(df$Income)
 
-qqPlot(df$Total.Claim.Amount)
+#qqPlot(df$Total.Claim.Amount)
 
 ######## Correlation Matrix ###########
-
 
 #Threshold for correlation
 
@@ -129,3 +135,61 @@ df %>%
   cor() %>% 
     corrplot(type = "upper", insig = "blank", diag = FALSE, addCoef.col = "grey")
 
+# more informative scatterplot matrix
+library(psych)
+pairs.panels(df[c("CLV", "month.premium",
+  "Income",
+  "Number.of.Policies",
+  "Months.Since.Last.Claim",
+  "Months.Since.Policy.Inception",
+  "engaged")])
+
+#### Model 1: Linear Regression to establish high CLV customers-------------------
+
+
+## Step 1: Training a model on the data ----
+model_01 <- lm(CLV ~ .-engaged,
+                data = df)
+
+# see the estimated beta coefficients
+model_01
+
+## Step 2: Evaluating model performance ----
+# see more detail about the estimated beta coefficients
+summary(model_01)
+
+## Step 3: Improving model performance ----
+
+# add a higher-order "age" term
+insurance$age2 <- insurance$age^2
+
+# add an indicator for BMI >= 30
+insurance$bmi30 <- ifelse(insurance$bmi >= 30, 1, 0)
+
+# create final model
+ins_model02 <- lm(expenses ~ age + age2 + children + bmi + sex +
+                   bmi30*smoker + region, data = insurance)
+
+summary(ins_model02)
+
+# making predictions with the regression model
+insurance$pred <- predict(ins_model02, insurance)
+cor(insurance$pred, insurance$expenses)
+
+plot(insurance$pred, insurance$expenses)
+abline(a = 0, b = 1, col = "red", lwd = 3, lty = 2)
+
+predict(ins_model02,
+        data.frame(age = 30, age2 = 30^2, children = 2,
+                   bmi = 30, sex = "male", bmi30 = 1,
+                   smoker = "no", region = "northeast"))
+
+predict(ins_model02,
+        data.frame(age = 30, age2 = 30^2, children = 2,
+                   bmi = 30, sex = "female", bmi30 = 1,
+                   smoker = "no", region = "northeast"))
+
+predict(ins_model02,
+        data.frame(age = 30, age2 = 30^2, children = 0,
+                   bmi = 30, sex = "female", bmi30 = 1,
+                   smoker = "no", region = "northeast"))

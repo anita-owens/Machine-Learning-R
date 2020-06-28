@@ -64,7 +64,7 @@ table(bank_data$housing)
 
 
 
-#########Recode binary variables into 0/1 #####
+######### Encoding - Recode binary variables into 0/1 #####
 bank_data <- bank_data %>% 
       mutate(default_target = ifelse(default == "no", 0,1),
             housing_target = ifelse(housing == "no", 0,1),
@@ -90,33 +90,16 @@ bank_data  <- rename(bank_data,
                         loan = loan_target
 )
 
+#Convert all character variable into factor in one line:
+bank_data <- bank_data %>% mutate_if(is.character, as.factor)
+glimpse(bank_data)
 
-#subset dataframe to get just all numeric variables
-all_num <- bank_data %>% 
-        select_if(is.numeric)
-head(all_num)
+#didn't work for our new variables
+bank_data$default<- as.factor(bank_data$default)
+bank_data$housing<- as.factor(bank_data$housing)
+bank_data$loan <- as.factor(bank_data$loan)
 
-
-# Build Correlation Matrix structure:
-all_num %>% 
-  cor() %>% 
-    corrplot(type = "upper", insig = "blank", addCoef.col = "black", diag = FALSE)
-##Insights
-#duration appears to have a moderate relationship to the response variable
-#previous and pdays appear to have a moderate linear relationshp with each other
-
-#pairs(all_num)
-
-
-# Compute summary statistics of all columns in the data frame
-dat_summ <- summary(all_num)
-print(dat_summ)
-
-# create a pairwise scatterplot
-library(GGally)
-
-# all_num %>%
-#     ggpairs()
+glimpse(bank_data) #check results
 
 ########## Baseline Response Rate & Segments comparison #############
 
@@ -488,8 +471,8 @@ sb6 <- ggplot(data=bank_data, aes(x=loan, y=as.factor(target), fill=as.factor(ta
 sb7 <- ggplot(data=bank_data, aes(x=month, y=as.factor(target), fill=as.factor(target))) +
   geom_bar(stat="identity")
 
-plot_grid(sb1, sb2, sb3, labels = c('A', 'B', 'C'))
-plot_grid(sb4, sb5, sb6, sb7, labels = c('D', 'E', 'F', 'G'))
+plot_grid(sb1, sb2, sb3, labels = "AUTO")
+plot_grid(sb4, sb5, sb6, sb7, labels =  "AUTO")
 
 ########What were the campaign parameters?############
 
@@ -508,7 +491,29 @@ table(bank_data$poutcome)
 ## related with the last contact of the current campaign:
 table(bank_data$contact)
 
+########## Correlation Analysis & Matrix ############
 
+#Threshold for correlation
+
+#Cohen's rule of thumb (if data are normally distributed)
+# r = 0.1 weak
+# r = 0.3 medium
+# r = 0.5 strong
+
+# Build Correlation Matrix structure:
+bank_data %>% 
+  select_if(is.numeric) %>% 
+  cor() %>% 
+    corrplot(type = "upper", insig = "blank", diag = FALSE, addCoef.col = "grey")
+#duration appears to have a moderate relationship to the response variable
+#previous and pdays appear to have a moderate linear relationshp with each other
+
+#re-build as matrix
+corr_matrix <- bank_data %>% 
+  select_if(is.numeric) %>% 
+  cor() 
+
+round(corr_matrix,2)
 
 ####Observations
 
@@ -551,10 +556,10 @@ CrossTable(bank_data$loan, bank_data$target, digits=2, prop.c = TRUE,
 glimpse(bank_data$target)
 
 #factor target variable if needed
-#bank_data$target <- as.factor(bank_data$target)
+bank_data$target <- as.factor(bank_data$target)
 
 #check results
-#glimpse(bank_data$target)
+glimpse(bank_data$target)
 
 #import library and set seed for reproducibility
 library(caTools)
@@ -587,14 +592,15 @@ library(glmnet)
 # Then, extract the coefficients and transform them to the odds ratios.
 
 #Step 1: Run Logistic Regression on the train data
-logreg <- glm(target ~ ., 
+#not running with month or day variables
+model_01_logreg <- glm(target ~ . - month -day, 
                 family = binomial, data = train_data)
 
 # Take a look at the model
-summary(logreg)
+summary(model_01_logreg)
 
 # Take a look at the odds
-coefsexp <- coef(logreg) %>% exp()%>% round(2)
+coefsexp <- coef(model_01_logreg) %>% exp()%>% round(2)
 coefsexp
 
 # Odds ratio, represents which group has better odds of success,
@@ -618,7 +624,7 @@ coefsexp
 # -cross-validation
 
 library(car)
-vif(logreg)
+vif(model_01_logreg)
 
 # Feature (x) variables with a VIF value above 5 indicate high degree of
 # multi-collinearity.
@@ -632,34 +638,58 @@ vif(logreg)
 #if VIF of a variable is one, it means that it is
 #not correlated with any of the other variables.
 
-#poutcome and job have high VIF's, we will remove it from our model and run log regression again
+#Job has an extremely high VIF, we will remove it from our model and run log regression again
 #to compare
 
-logreg_var_remov <- glm(target ~ . -poutcome -job, 
+model_02_logreg <- glm(target ~ . -month -day -job, 
                 family = binomial, data = train_data)
 
 # Take a look at the model
-summary(logreg_var_remov)
+summary(model_02_logreg)
 
 #check vif again
-vif(logreg_var_remov)
+vif(model_02_logreg)
+#No extremely high VIF's so removing job improved the model
 
-#No VIF larger than 4, but removing the 2 variables does not change
-#our log regression that much so keeping them is fine.
+
+#Let's run again with month and day and see what happens
+model_03_logreg <- glm(target ~ .-job, 
+                family = binomial, data = train_data)
+
+# Take a look at the model
+summary(model_03_logreg)
+
+#check vif again
+vif(model_03_logreg)
+
+#Suggests that the day of the contact makes
+#a positive difference for the target variable
+
+#Some months are significantly positive
+# - mar jun dec sep oct dec
+
+#Months significantly negative (feb barely significant)
+# - jan may jul aug nov
+
+#Let's compare the models we've run so far
+anova(model_01_logreg, model_02_logreg, model_03_logreg, test="Chisq")
+#Model 1 was not significant but models 2 and 3 are significant
+# at 95%. Model 3 had the lowest residuals.
+
+library(lmtest)
+lrtest(model_02_logreg, model_03_logreg)
+#According to likeihood ratio test, model 3 is significantly better
+
 
 ########## Step 2: Overall significance of the model############################## 
-library(lmtest)
-lrtest(logreg)
 
+#Compare our best logistic regression model against null model
+lrtest(model_03_logreg)
 
 # We can see that the low p value indicates the model is highly significant i.e.
 # the likelihood of a customer responding to the campaign (TARGET) depends on
 # independent x variables in the dataset.
 
-
-#Goodness of fit packages & measures
-library(descr)
-LogRegR2(logreg)
 
 
 ########## Step 3: McFadden or pseudo R² interpretation############################## 
@@ -679,50 +709,44 @@ LogRegR2(logreg)
 #   good if > 0.4
 #   very good if > 0.5
 
+##Goodness of fit packages & measures
 library(pscl)
-pR2(logreg)
- 
+model_fit <- pR2(model_03_logreg)
+print(model_fit)
+
+#retrieve just the mcfadden r2 from model_fit
+model_fit[4]
 
 #pass the Mcfadden R2 into the function to get fit estimate
 pseudoR_func <- function(pseudoR){
   if(pseudoR >= 0.5){print("very good fit")}
   else if(pseudoR >= 0.4 && pseudoR < 0.5) {print("good fit")}
-  else if (pseudoR >= 0.2 && pseudoR < 0.4) {print("reasonsable fit")}
+  else if (pseudoR >= 0.2 && pseudoR < 0.4) {print("reasonable fit")}
   else{print("try again")}
 }
 
-pseudoR_func(3.356671e-01)
+pseudoR_func(model_fit[4])
 
+#Albeit not perfect the fit is reasonable
 
 ########## Step 4: Individual coefficients significance and interpretation############################# 
 
 #library(coef.lmList)
-
-summary(logreg)
+summary(model_03_logreg)
 
 # The Odds Ratio and Probability of each x variable is calculated based on the
 # formulae, Odds Ratio = exp(Co-efficient estimate) Probability = Odds Ratio /
 # (1 + Odds Ratio)
 
-# Take a look at the odds - extract coefficients
-coefsex <- coef(logreg) %>% exp()%>% round(2)
 
-coefsexDF <- as.data.frame(coefsex)
+#plot coefficients on odds ratio
+library(sjPlot)
+plot_model(model_03_logreg)
 
-#attempts
-data.frame(matrix(unlist(coefsex), nrow=30, byrow=T))
-#coef(coefsex, augFrame = TRUE)
-
-#add probability
-coefsexDF <- coefsexDF %>% 
-        mutate(Probability = coefsex/(1+coefsex))
-
-#check results
-View(coefsexDF)
 
 ######Step 5: Model Accuracy#################
 
-pred <- predict(logreg, test_data, type = "response") #predict using test data
+pred <- predict(model_03_logreg, test_data, type = "response") #predict using test data
 
 #check results
 head(pred)
@@ -739,7 +763,7 @@ sum(diag(contingency_tab))/sum(contingency_tab) *100
 # Confusion Matrix using the caret package to validate above
 caret::confusionMatrix(contingency_tab)
 
-#Our model leads 89% to correct predictions
+#Our model leads to approx 90% of correct predictions
 
 ######### Step 6: Model Diagnostics - ROC/AUC/K-Fold CV #################
 
@@ -770,7 +794,7 @@ plot(prf)
 auc <- performance(pr, measure = "auc")
 auc
 
-# AUC is 0.9085254
+# AUC is 0.9074364
 as.numeric(performance(pr, measure = "auc")@y.values)
 
 #AUC Interpretation
@@ -797,23 +821,6 @@ folds <- createFolds(bank_data$target, k = 10)
 str(folds)
 
 
-#rename objects for custom function
-bank_model <- logreg
-
-
-  cv_results <- lapply(folds, function(x) {
-  train_data <- bank_data[-x, ]
-  test_data <- bank_data[x, ]
-  bank_model <- C5.0(target ~ ., data = train_data)
-  bank_pred <- predict(bank_model, test_data)
-  bank_actual <- test_data$target
-  kappa <- kappa2(data.frame(bank_actual, bank_pred))$value
-  return(kappa)
-})
-
-
-
-
 #########Summary of Conclusions from Log Regression Model#################
 
 # Positive correlation - should contact customers with these characteristics
@@ -831,9 +838,9 @@ bank_model <- logreg
 #-also if has credit currently in default with the bank
 #- number of contacts
 
-    #The bank should limit the number of contacts it has with
-    # a customer. What's most likely happening is that customers
-    #may ignore communication from the bank if its gets too many.
+#The bank should limit the number of contacts it has with
+# a customer. What's most likely happening is that customers
+#may ignore communication from the bank if its gets too many.
 
 
 
@@ -870,7 +877,7 @@ bank_test <- bank_data[-train_indices, ]
 #######Step 2: Build the decision tree ###################
 
 #train the classification tree model
-tree_bank <- tree(target ~ ., data = bank_train)
+tree_bank <- tree(target ~ .-job, data = bank_train)
 
 tree_bank
 
@@ -897,7 +904,7 @@ text(tree_bank)
 
 
 #re-build tree without duration variable
-tree_bank_nodur <- tree(target~. -duration, data = bank_train)
+tree_bank_nodur <- tree(target~. -job -duration, data = bank_train)
 
 # The summary() function lists the variables that are used as internal nodes in
 # the tree, the number of terminal nodes, and the (training) error rate.
@@ -925,16 +932,17 @@ text(tree_bank_nodur, pretty=0)
 # test data. The predict() function can be used for this purpose.
 
 
-
+library(rpart)
+library(rpart.plot)
 #Let's use rpart package
 #train the classification tree model
-class_tree <- rpart(target ~ ., data = bank_train, method="class")
+class_tree <- rpart(target~. -job, data = bank_train, method="class")
 
 # Draw the decision tree
 fancyRpartPlot(class_tree)
 
 #tree with no duration
-class_tree_b<- rpart(target ~ . -duration, data = bank_train, method="class")
+class_tree_b<- rpart(target ~ . -job -duration, data = bank_train, method="class")
 
 # Draw the decision tree
 fancyRpartPlot(class_tree_b)
@@ -1016,4 +1024,5 @@ text(prune_tree_bank,pretty=0)
 
 
 #Strongly believe that the logistic regression model
-#offers better insights and performance than the tree model.
+#offers better insights and performance than the tree model for marketing
+#purposes.
