@@ -370,6 +370,10 @@ logreg <- glm(revenue ~ .,
 # Take a look at the model
 summary(logreg)
 
+
+# From the summary of the generated model, we infer that there are some independent
+# variables that are significant based on their p value. 
+
 #The p-values associated with ExitRates,
 # PageValues, VisitorTypes, are so tiny we can reject
 #the null hypothesis. There indeed is an association between
@@ -383,6 +387,13 @@ coefsexp
 # and it’s given by calculating the ratio of odds for each group
 # If we know the coefficients of independent variables Xs and the intercept a,
 #we can predict the probability. 
+
+#We can plot the coefficients by their significance
+library(coefplot)
+coefplot(logreg, intercept = FALSE,
+  outerCI=1.96, lwdOuter=1.5,
+  ylab="Characteristics",
+  xlab="")
 
 
 ########## Step 1a: Variable Inflation Factor check############################## 
@@ -456,27 +467,22 @@ LogRegR2(logreg)
 #   good if > 0.4
 #   very good if > 0.5
 
-LogRegR2(logreg)
+
+library(pscl)
+pseudo_stats <- pR2(logreg)
+print(pseudo_stats[4])
  
 
-#pass the Mcfadden R2 into the pseudoR_func to get fit estimates
+#custom function for determining fit based on pseudo R-squared
 pseudoR_func <- function(pseudoR){
-  if(pseudoR >= .5){print("very good fit")}
-  if(pseudoR >=.4 && pseudoR < .5) {print("good fit")}
-  if (pseudoR >= .2 && pseudoR < .4) {print("reasonsable fit")}
+  if(pseudoR >= 0.5){print("very good fit")}
+  else if(pseudoR >= 0.4 && pseudoR < 0.5) {print("good fit")}
+  else if (pseudoR >= 0.2 && pseudoR < 0.4) {print("reasonsable fit")}
   else{print("try again")}
 }
+#pass the Mcfadden R2 into the function to get fit estimate
+pseudoR_func(pseudo_stats[4])
 
-pseudoR_func(0.3148552)
-
-0.3148552 >= 0.2 #reasonable fit
-0.3148552 >= 0.4
-0.3148552 >= 0.5
-
-# From the summary of the generated model, we infer that there are some x
-# variables that are significant based on their p value. These are the x
-# variables that influence the customer responding to the campaign and are shown
-# in the table.
 
 ########## Step 4: Individual coefficients significance and interpretation############################# 
 

@@ -492,7 +492,8 @@ table(fb_data$Type) #how was type
 #money this segment should take care of that
 
 
-# Group 1 dominates in number of observations. It's an unpaid segment with
+# Group 1 dominates in number of observations. It's an
+# unpaid segment with
 # the most average page likes. Type is photo
 # This indicates that posting photos goes a long way in
 # engaging users with our FB page.

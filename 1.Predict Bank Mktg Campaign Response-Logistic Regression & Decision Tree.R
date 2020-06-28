@@ -741,7 +741,7 @@ caret::confusionMatrix(contingency_tab)
 
 #Our model leads 89% to correct predictions
 
-######### Step 6: Model Diagnostics - AUC #################
+######### Step 6: Model Diagnostics - ROC/AUC/K-Fold CV #################
 
 #Plot ROC Curve & Calculate AUC area
 library(ROCR)
@@ -760,18 +760,56 @@ plot(prf)
 
 #The ideal ROC curve hugs the top left corner, indicating a high
 #true positive rate and a low false positive rate.
+#True positive rate on y-axis
+#False positive rate on the x-axis
 
 #The larger the AUC, the better the classifier
+#The AUC aline is insufficient to identify a best model
+#It's used in combination with qualitative examination
+#of the ROC curve
 auc <- performance(pr, measure = "auc")
 auc
 
 # AUC is 0.9085254
 as.numeric(performance(pr, measure = "auc")@y.values)
 
+#AUC Interpretation
+#A: Outstanding = 0.9 to 1.0
+#B: Excellent/Good = 0.8 to 0.9
+#C: Acceptable/Fair = 0.7 to 0.8
+#D: Poor = 0.6 to 0.7
+#E: No Discrimination = 0.5 to 0.6
+
 
 #now let's just plot the ROC and look at true positive vs false positive
 perf <- performance (pr, measure = 'tpr', x.measure = "fpr")
 plot(perf) + abline(a=0, b=1, col = 'red') # the red line is randomness
+
+## Cross-validation
+library(C50)
+library(irr)
+
+#create 10 folds
+set.seed(123)
+folds <- createFolds(bank_data$target, k = 10)
+
+#peek at the results
+str(folds)
+
+
+#rename objects for custom function
+bank_model <- logreg
+
+
+  cv_results <- lapply(folds, function(x) {
+  train_data <- bank_data[-x, ]
+  test_data <- bank_data[x, ]
+  bank_model <- C5.0(target ~ ., data = train_data)
+  bank_pred <- predict(bank_model, test_data)
+  bank_actual <- test_data$target
+  kappa <- kappa2(data.frame(bank_actual, bank_pred))$value
+  return(kappa)
+})
 
 
 
@@ -969,7 +1007,8 @@ text(prune_tree_bank,pretty=0)
 
 #########Summary of Insights from Tree Model#################
 
-#without duration variable, poutcome becomes the most
+#without duration variable, poutcome 
+# becomes the most
 #important variable,
 #if customer has a mortgage loan
 
