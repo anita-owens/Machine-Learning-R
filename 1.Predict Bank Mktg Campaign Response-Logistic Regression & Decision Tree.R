@@ -101,6 +101,8 @@ bank_data$loan <- as.factor(bank_data$loan)
 
 glimpse(bank_data) #check results
 
+
+
 ########## Baseline Response Rate & Segments comparison #############
 
 prop.table(table(bank_data$target))
@@ -599,6 +601,15 @@ model_01_logreg <- glm(target ~ . - month -day,
 # Take a look at the model
 summary(model_01_logreg)
 
+#Coefficients: 
+
+# -Negative coefficients that are statistically significant
+#correspond to variables that are negatively correlated to the odds (and hence
+#to the probability) of a positive outcome
+# - Positive coefficients that are statistically significant are 
+# positively correlated to
+#the odds of a positive outcome.
+
 # Take a look at the odds
 coefsexp <- coef(model_01_logreg) %>% exp()%>% round(2)
 coefsexp
@@ -606,6 +617,8 @@ coefsexp
 # Odds ratio, represents which group has better odds of success,
 # and it’s given by calculating the ratio of odds for each group
 # If we know the coefficients of independent variables Xs and the intercept a, we can predict the probability. 
+
+
 
 ########## Step 1a: Variable Inflation Factor check############################## 
 
@@ -653,7 +666,7 @@ vif(model_02_logreg)
 
 
 #Let's run again with month and day and see what happens
-model_03_logreg <- glm(target ~ .-job, 
+model_03_logreg <- glm(target ~ . -job, 
                 family = binomial, data = train_data)
 
 # Take a look at the model
@@ -670,6 +683,7 @@ vif(model_03_logreg)
 
 #Months significantly negative (feb barely significant)
 # - jan may jul aug nov
+
 
 #Let's compare the models we've run so far
 anova(model_01_logreg, model_02_logreg, model_03_logreg, test="Chisq")
@@ -741,8 +755,11 @@ summary(model_03_logreg)
 
 #plot coefficients on odds ratio
 library(sjPlot)
-plot_model(model_03_logreg)
+plot_model(model_03_logreg, vline.color = "red",
+  sort.est = TRUE, show.values = TRUE)
 
+#prints confidence intervals
+exp(confint(model_03_logreg))
 
 ######Step 5: Model Accuracy#################
 
@@ -821,6 +838,7 @@ folds <- createFolds(bank_data$target, k = 10)
 str(folds)
 
 ######### Step 7: Variable Importance #################
+
 #Let's look at the abasolute value of the t-statistic for
 #each model parameter using caret package
 varImp(model_03_logreg)
@@ -830,22 +848,25 @@ varImp(model_03_logreg)
 # Positive correlation - should contact customers with these characteristics
 # - has a balance
 # -education - tertiary or secondary education
-# -if a student
-# or retired
+#  - or
 #  -being single
-# if the customer had responded to a prior campaign before
+# if the customer had successfully responded to a prior campaign before
 # 
+# Some months are more successful than others:
+# - mar oct sep dec jun
+# there are perhaps cost savings in running
+# this type of campaign during these specific
+# months
+
 # Negative correlation - do not contact customers with these characteristics
 # -if customer has a personal loan
 #- if customer has a mortgage loan
-#- some professions housemade, entrepreneur
 #-also if has credit currently in default with the bank
-#- number of contacts
+#- contact method is unknown which makes sense
 
 #The bank should limit the number of contacts it has with
 # a customer. What's most likely happening is that customers
 #may ignore communication from the bank if its gets too many.
-
 
 
 
