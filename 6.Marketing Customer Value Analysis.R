@@ -25,8 +25,8 @@ library(car)
 
 ###### Data Import #############
 
-df<-read.csv("https://raw.githubusercontent.com/pthiagu2/DataMining/master/WA_Fn-UseC_-Marketing-Customer-Value-Analysis.csv")
-#View(df)
+df<-read.csv("https://raw.githubusercontent.com/pthiagu2/DataMining/master/WA_Fn-UseC_-Marketing-Customer-Value-Analysis.csv", stringsAsFactors = TRUE)
+glimpse(df)
 
 #Check response variable
 table(df$Response)
@@ -38,7 +38,7 @@ table(df$engaged) #check results
 
 ########### Check Data #################
 
-#summarize variables in dataframe
+#summarize variables in data frame
 summary(df)
 
 #let's look at the post type
@@ -73,7 +73,7 @@ names(df)
 df[!complete.cases(df),] #no missing
 
 #using aggr function from VIM packages --missing values are in red
-#aggr(df, prop = F, numbers = T)
+aggr(df, prop = F, numbers = T)
 #nothing missing
 
 ###### Explore Data: Data visualization ##############
@@ -107,6 +107,33 @@ bar6 <- ggplot(df, aes(x=factor(location)))+
 
 plot_grid(bar1, bar2, bar3, bar4, bar5,
   bar6, labels = "AUTO")
+
+
+###### Univariate Analysis: Histogram plots for important independent numeric variables##
+
+
+p1 <-  ggplot(data = df, aes(x = age))+
+      geom_histogram(fill = "lightblue", binwidth = 5, colour = "black") +
+      geom_vline(aes(xintercept = median(age)), linetype = "dashed")
+
+
+p2 <- ggplot(data = df, aes(x = balance))+
+      geom_histogram(fill = "blue", colour = "black") +
+      geom_vline(aes(xintercept = median(balance)), linetype = "dashed")
+
+ # campaign: number of contacts performed during this campaign and for this
+ # client (numeric, includes last contact)
+p3 <- ggplot(data = df, aes(x = campaign))+
+      geom_histogram(fill = "red", binwidth = 3, colour = "black") +
+      geom_vline(aes(xintercept = median(campaign)), linetype = "dashed")
+
+
+# day_of_week: last contact day of the week (categorical:
+# 'mon','tue','wed','thu','fri')
+p4 <- ggplot(data = df, aes(x = day))+
+      geom_histogram(fill = "green", binwidth = 5, colour = "black") +
+      geom_vline(aes(xintercept = median(day)), linetype = "dashed")
+
 
 ########## Check for normality ##########
 
@@ -158,19 +185,6 @@ model_01
 # see more detail about the estimated beta coefficients
 summary(model_01)
 
-## Step 3: Improving model performance ----
-
-# add a higher-order "age" term
-insurance$age2 <- insurance$age^2
-
-# add an indicator for BMI >= 30
-insurance$bmi30 <- ifelse(insurance$bmi >= 30, 1, 0)
-
-# create final model
-ins_model02 <- lm(expenses ~ age + age2 + children + bmi + sex +
-                   bmi30*smoker + region, data = insurance)
-
-summary(ins_model02)
 
 # making predictions with the regression model
 insurance$pred <- predict(ins_model02, insurance)

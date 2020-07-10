@@ -15,9 +15,7 @@
 
 library(rpart)
 library(psych)
-library(dplyr)
 library(corrplot)
-library(ggplot2)
 library(cowplot)
 library(tree)
 library(caret)
@@ -25,6 +23,8 @@ library(rpart)
 library(rattle)
 library(rpart.plot)
 library(RColorBrewer)
+library(tidyverse)
+library(lubridate)
 
 # Customer response prediction using Logistic Regression
 
@@ -49,8 +49,8 @@ setwd("/Users/anitaowens/R_Programming/UCI Machine Learning Repo/Bank Marketing 
 
 getwd() #check working directory
 
-
-bank_data <- read.csv("bank-full.csv", sep = ';')
+#Import the full dataset
+bank_data <- read.csv("bank-additional-full.csv", sep = ';')
 
 head(bank_data)
 glimpse(bank_data)
@@ -61,6 +61,7 @@ table(bank_data$loan)
 table(bank_data$campaign)
 table(bank_data$y) #the variable we're trying to predict
 table(bank_data$housing)
+table(bank_data$day)
 
 
 
@@ -78,36 +79,80 @@ names(bank_data)
 
 #remove re-coded variables plus the y variable as we no longer need it
 bank_data <- bank_data %>% 
-      select(target, age, job, marital,
-        education, balance, contact, day, month,
-        duration, campaign, pdays, previous, poutcome,
-        default_target, housing_target, loan_target)
+      select(-default, - housing, -loan, -y)
+names(bank_data) # check results
 
 #rename variables
 bank_data  <- rename(bank_data,
                         default = default_target,
-                        housing = housing_target,
-                        loan = loan_target
+                        housing_loan = housing_target,
+                        personal_loan = loan_target
 )
+names(bank_data) # check results
 
 #Convert all character variable into factor in one line:
-bank_data <- bank_data %>% mutate_if(is.character, as.factor)
+bank_data <- bank_data %>% mutate_if(is.character, factor)
 glimpse(bank_data)
 
 #didn't work for our new variables
 bank_data$default<- as.factor(bank_data$default)
-bank_data$housing<- as.factor(bank_data$housing)
-bank_data$loan <- as.factor(bank_data$loan)
+bank_data$housing_loan<- as.factor(bank_data$housing_loan)
+bank_data$personal_loan <- as.factor(bank_data$personal_loan)
+bank_data$day_of_week <- factor(bank_data$day_of_week,
+                                   levels = c("mon", "tue", "wed", "thu", "fri"))
 
 glimpse(bank_data) #check results
 
+#10 - day_of_week: last contact day of the week (categorical: 'mon','tue','wed','thu','fri')
+#This variable was not encoded correctly in dataframe. It represents days of
+#month, not days of week.
+
+#Variable 13 - pdays: number of days that passed by after the client
+#was last contacted from a previous campaign (numeric; 999 means client was not previously contacted
+max(bank_data$pdays)
+min(bank_data$pdays)
+hist(bank_data$pdays)
 
 
-########## Baseline Response Rate & Segments comparison #############
+########## Working with dates #############
+str(bank_data$month)
+
+#add dummy year & day to dataframe since we don't have this information
+bank_data$year <- as.numeric("2014")
+bank_data$day <- as.numeric("01")
+
+#create new variable for campaign date
+bank_data <- bank_data %>% 
+  unite("campaign_date", day, month, year, sep = "")
+
+#check results
+table(bank_data$campaign_date)
+
+#Now we need to reformat this
+str(bank_data$campaign_date)
+
+bank_data$campaign_date <- as.Date(bank_data$campaign_date, "%d%b%Y")
+
+#check results
+str(bank_data$campaign_date)
+
+#Let's pull floor month and day back into dataframe as objects
+bank_data$month <- floor_date(bank_data$campaign_date, "month")
+table(bank_data$month)
+
+#drop day column
+bank_data <- bank_data %>% 
+  select(-day)
+
+names(bank_data)
+
+str(bank_data)
+
+########## Baseline Response Rate & Segments Comparison #############
 
 prop.table(table(bank_data$target))
 
-conversion_rate  <- 0.1169848 
+conversion_rate  <- 0.1126542
 
 #data frame grouped by job
 job.df <- bank_data %>% 
@@ -131,7 +176,7 @@ mutate(highlight_flag =
 head(job.df$highlight_flag)
 
 #plot response rate by job
-ggplot(data=job.df, aes(x=reorder(job, response_rate), y=response_rate,
+p1job <- ggplot(data=job.df, aes(x=reorder(job, response_rate), y=response_rate,
   fill = factor(highlight_flag))) +
   geom_bar(stat="identity") +
   geom_hline(yintercept=conversion_rate, linetype="dashed", color = "black") +
@@ -140,6 +185,9 @@ ggplot(data=job.df, aes(x=reorder(job, response_rate), y=response_rate,
     scale_fill_manual(values = c('#595959', 'red')) +
   labs(x = ' ', y = 'Response Rate', title = str_c("Response rate by job type")) +
   theme(legend.position = "none")
+
+#Insights: Students, retired, unemployed, & admin
+#professions have higher response rates.
 
 
 #data frame grouped by marital status
@@ -161,7 +209,7 @@ mutate(highlight_flag =
     ifelse(response_rate > conversion_rate, 1, 0))
 
 #plot response rate by marital status
-ggplot(data=marital.df, aes(x=reorder(marital, response_rate), y=response_rate,
+p2marstatus<-ggplot(data=marital.df, aes(x=reorder(marital, response_rate), y=response_rate,
   fill = factor(highlight_flag))) +
   geom_bar(stat="identity") +
   geom_hline(yintercept=conversion_rate, linetype="dashed", color = "black") +
@@ -170,6 +218,11 @@ ggplot(data=marital.df, aes(x=reorder(marital, response_rate), y=response_rate,
     scale_fill_manual(values = c('#595959', 'red')) +
   labs(x = ' ', y = 'Response Rate', title = str_c("Response rate by marital status")) +
   theme(legend.position = "none")
+
+##Insights: singles response at much higher rate, but there is an
+#even larger category of unknowns so not sure how reliable this
+#variable is
+
 
 #data frame grouped by education
 educ.df <- bank_data %>% 
@@ -190,15 +243,19 @@ mutate(highlight_flag =
     ifelse(response_rate > conversion_rate, 1, 0))
 
 #plot response rate by education
-ggplot(data=educ.df, aes(x=reorder(education, response_rate), y=response_rate,
+p3educ<-ggplot(data=educ.df, aes(x=reorder(education, response_rate), y=response_rate,
   fill = factor(highlight_flag))) +
   geom_bar(stat="identity") +
   geom_hline(yintercept=conversion_rate, linetype="dashed", color = "black") +
   theme(axis.text.x = element_text(angle = 90)) +
   coord_flip() +
     scale_fill_manual(values = c('#595959', 'red')) +
-  labs(x = 'Education', y = 'Response Rate', title = str_c("Insights")) +
+  labs(x = 'Education', y = 'Response Rate', title = str_c("Education")) +
   theme(legend.position = "none")
+
+##Insights: Illiterates, unknown, and university degrees
+#respond at a higher rate
+
 
 #data frame grouped by contact
 contact.df <- bank_data %>% 
@@ -219,15 +276,17 @@ mutate(highlight_flag =
     ifelse(response_rate > conversion_rate, 1, 0))
 
 #plot response rate by contact
-ggplot(data=contact.df, aes(x=reorder(contact, response_rate), y=response_rate,
+p4cont <- ggplot(data=contact.df, aes(x=reorder(contact, response_rate), y=response_rate,
   fill = factor(highlight_flag))) +
   geom_bar(stat="identity") +
   geom_hline(yintercept=conversion_rate, linetype="dashed", color = "black") +
   theme(axis.text.x = element_text(angle = 90)) +
   coord_flip() +
     scale_fill_manual(values = c('#595959', 'red')) +
-  labs(x = 'contact', y = 'Response Rate', title = str_c("Insights")) +
+  labs(x = 'contact', y = 'Response Rate', title = str_c("Contact information")) +
   theme(legend.position = "none")
+#Insights: Higher response rate via cellular
+
 
 #data frame grouped by month
 month.df <- bank_data %>% 
@@ -247,16 +306,24 @@ month.df <- month.df %>%
 mutate(highlight_flag =
     ifelse(response_rate > conversion_rate, 1, 0))
 
+#factor the month variable if needed
+#month.df$month <- factor(month.df$month)
+
 #plot response rate by month
-ggplot(data=month.df, aes(x=month, y=response_rate,
+p5month <- ggplot(data=month.df, aes(x=month, y=response_rate,
   fill = factor(highlight_flag))) +
   geom_bar(stat="identity") +
   geom_hline(yintercept=conversion_rate, linetype="dashed", color = "black") +
-  theme(axis.text.x = element_text(angle = 90)) +
+ # theme(axis.text.y = element_text(angle = 0)) +
   coord_flip() +
     scale_fill_manual(values = c('#595959', 'red')) +
-  labs(x = 'month', y = 'Response Rate', title = str_c("Insights")) +
+  ylim(c(0, 1)) +  
+  labs(x = 'month', y = 'Response Rate', title = str_c("By month")) +
   theme(legend.position = "none")
+
+
+#The response rates are quite high for certain months
+#Sep, Oct & Dec & Feb, March, April
 
 
 #data frame grouped by poutcome
@@ -280,14 +347,14 @@ mutate(highlight_flag =
 poutcome.df$highlight_flag
 
 #plot response rate by poutcome
-ggplot(data=poutcome.df, aes(x=reorder(poutcome, response_rate), y=response_rate,
+p6outcome <- ggplot(data=poutcome.df, aes(x=reorder(poutcome, response_rate), y=response_rate,
   fill = factor(highlight_flag))) +
   geom_bar(stat="identity") +
   geom_hline(yintercept=conversion_rate, linetype="dashed", color = "black") +
   theme(axis.text.x = element_text(angle = 90)) +
   coord_flip() +
     scale_fill_manual(values = c('#595959', 'red')) +
-  labs(x = ' ', y = 'Response Rate', title = str_c("Outcome of the previous marketing campaign - Response Rate 11.69%")) +
+  labs(x = ' ', y = 'Response Rate', title = str_c("Outcome of the previous marketing campaign")) +
   theme(legend.position = "none")
 
 #The response rate is 64% (through the roof) if the customer had responded positively
@@ -296,10 +363,49 @@ ggplot(data=poutcome.df, aes(x=reorder(poutcome, response_rate), y=response_rate
 #use chi-square test
 chisq<- chisq.test(bank_data$target, bank_data$poutcome)
 chisq
+if(chisq$p.value < 0.05) {
+  print("Significant")
+  } else {
+   print("Not significant")
+}
 
-p_value <- chisq$p.value
-p_value < .05 #the p-value is tiny thus highly significant!
 
+
+#data frame grouped by day of week
+day.df <- bank_data %>% 
+  group_by(day_of_week) %>% 
+  summarize(total_count = n(),
+    total_resp = sum(target)) %>% 
+  mutate(response_rate = total_resp/total_count)
+
+day.df #check results
+
+#check conversions colum
+sum(day.df$total_resp)
+sum(day.df$total_count)
+
+#add highlight flag column
+day.df <- day.df %>% 
+mutate(highlight_flag =
+    ifelse(response_rate == max(response_rate), 1, 0))
+
+day.df$highlight_flag
+
+#plot response rate by pday
+p7day <- ggplot(data=day.df, aes(x=reorder(day_of_week, response_rate), y=response_rate,
+  fill = factor(highlight_flag))) +
+  geom_bar(stat="identity") +
+  geom_hline(yintercept=conversion_rate, linetype="dashed", color = "black") +
+  theme(axis.text.x = element_text(angle = 90)) +
+  coord_flip() +
+    scale_fill_manual(values = c('#595959', 'red')) +
+  labs(x = ' ', y = 'Response Rate', title = str_c("Response rate by day")) +
+  theme(legend.position = "none")
+
+#The highest response rate on Thursdays
+
+plot_grid(p1job, p2marstatus, p3educ, p4cont, p5month, p6outcome, 
+          p7day, labels = "AUTO")
 
 
 ###### Univariate Analysis: Histogram plots for important independent numeric variables##
@@ -519,39 +625,53 @@ round(corr_matrix,2)
 
 ####Observations
 
-
-# -We see that More managerial professionals responded to the campaign when compared to other professionals.
 tab <- table(bank_data$target)
-prop.table(tab) #12% response rate
-# BUT managers made up 25% of respondents
-addmargins(table(bank_data$job, bank_data$target))
+prop.table(tab) #12% baseline response rate
 
 # 2-Way Cross Tabulation
 library(gmodels)
 CrossTable(bank_data$job, bank_data$target, digits=2, prop.c = TRUE,
   prop.r = TRUE, prop.t = FALSE, chisq = FALSE, format = "SAS", expected = FALSE)
-#students & retireds response rate much higher than
-#the others
+# -We see that More retired responents responded to the campaign when
+#compared to other professionals.
+#retired responded at a rate of 25%
+#students - 31%
+#Admins also at 29%
 
 
-# -We see more married individuals responded to the campaign 52%
+# -We see more single individuals responded to the campaign 14% response rate
 CrossTable(bank_data$marital, bank_data$target, digits=2, prop.c = TRUE,
   prop.r = TRUE, prop.t = FALSE, chisq = FALSE, format = "SAS", expected = FALSE)
 
-#-Also high among singles 36%
-
 #Not Having a housing loan
-CrossTable(bank_data$housing, bank_data$target, digits=2, prop.c = TRUE,
+CrossTable(bank_data$housing_loan, bank_data$target, digits=2, prop.c = TRUE,
   prop.r = TRUE, prop.t = FALSE, chisq = FALSE, format = "SAS", expected = FALSE)
-#-Respondents who didn't already have a house loan were higher to respond (63%
-#vs 37% of those who already had a housing loan)
+#-Respondents who didn't already have a house loan were roughly the same as those who already had a housing loan, but the distribution
+#of the groups were 45% of respondents had no mortgage vs 55% respondents)
 
 
 #Not Having a personal loan
-CrossTable(bank_data$loan, bank_data$target, digits=2, prop.c = TRUE,
+CrossTable(bank_data$personal_loan, bank_data$target, digits=2, prop.c = TRUE,
   prop.r = TRUE, prop.t = FALSE, chisq = FALSE, format = "SAS", expected = FALSE)
-##-Respondents who didn't already have a personal loan were higher to respond
-##(91% had no prior personal loan)
+##-Respondents who didn't already have a personal loan were just
+#slightly higher to respond (11% vs 10%), but this is hardly significant
+##(82% had no prior personal loan)
+
+####### Feature Engineering ############
+
+#Variable 13 - pdays: number of days that passed by after the client
+#was last contacted from a previous campaign (numeric; 999 means client was not previously contacted
+#Let's create a binary variable
+
+max(bank_data$pdays)
+bank_data <- bank_data %>% 
+  mutate(prior_contact = ifelse(pdays == "999", 0,1))
+
+#check results
+table(bank_data$prior_contact)
+
+bank_data$prior_contact <- factor(bank_data$prior_contact)
+
 
 
 #######ML Model 1: Logistic Regression: Split dataset into development (train) and holdout (validation or test) sets#######
@@ -559,9 +679,13 @@ glimpse(bank_data$target)
 
 #factor target variable if needed
 bank_data$target <- as.factor(bank_data$target)
-
 #check results
-glimpse(bank_data$target)
+str(bank_data$target)
+
+#month variable also
+bank_data$month <- as.factor(bank_data$month)
+#check results
+str(bank_data$month)
 
 #import library and set seed for reproducibility
 library(caTools)
@@ -594,8 +718,8 @@ library(glmnet)
 # Then, extract the coefficients and transform them to the odds ratios.
 
 #Step 1: Run Logistic Regression on the train data
-#not running with month or day variables
-model_01_logreg <- glm(target ~ . - month -day, 
+#not running with unneeded variables
+model_01_logreg <- glm(target ~ .  -campaign_date, 
                 family = binomial, data = train_data)
 
 # Take a look at the model
@@ -651,10 +775,11 @@ vif(model_01_logreg)
 #if VIF of a variable is one, it means that it is
 #not correlated with any of the other variables.
 
-#Job has an extremely high VIF, we will remove it from our model and run log regression again
-#to compare
-
-model_02_logreg <- glm(target ~ . -month -day -job, 
+#Let's remove the high VIF variables
+model_02_logreg <- glm(target ~ . -campaign_date -job -pdays
+                       -poutcome -emp.var.rate -cons.price.idx
+                       -euribor3m -nr.employed 
+                       -month -prior_contact, 
                 family = binomial, data = train_data)
 
 # Take a look at the model
@@ -662,48 +787,48 @@ summary(model_02_logreg)
 
 #check vif again
 vif(model_02_logreg)
-#No extremely high VIF's so removing job improved the model
+#No extremely high VIF's so removing high VIF variables improved the model
+#as some coefficients from model 1 were unstable
 
 
-#Let's run again with month and day and see what happens
-model_03_logreg <- glm(target ~ . -job, 
-                family = binomial, data = train_data)
+#Insights from our logistic regression model
+#Coefficients that are positive and significant:
+# - age
+# - marital status - single
+# - education -  illiterate & unknown > not actionable but okay
+# - had responded to a previous campaign
+# - duration
+# - cons.conf.idx    
+# - Most days of the week are positive
+#   - but especially Tuesday & Wednesday
 
-# Take a look at the model
-summary(model_03_logreg)
+#Coefficients that are negative and significant:
+# - education > basic.9y  
+# - contacttelephone  
+# - has defaulted > default1 
+# - campaign
+# - has a personal_loan1
 
-#check vif again
-vif(model_03_logreg)
-
-#Suggests that the day of the contact makes
-#a positive difference for the target variable
-
-#Some months are significantly positive
-# - mar jun dec sep oct dec
-
-#Months significantly negative (feb barely significant)
-# - jan may jul aug nov
 
 
 #Let's compare the models we've run so far
-anova(model_01_logreg, model_02_logreg, model_03_logreg, test="Chisq")
-#Model 1 was not significant but models 2 and 3 are significant
-# at 95%. Model 3 had the lowest residuals.
+anova(model_01_logreg, model_02_logreg, test="Chisq")
+#Model 1 was not significant but model 2 is 
+# significant 95%. 
 
 library(lmtest)
-lrtest(model_02_logreg, model_03_logreg)
-#According to likeihood ratio test, model 3 is significantly better
+lrtest(model_01_logreg, model_02_logreg)
+#According to likelihood ratio test, model 2 is significantly better
 
 
 ########## Step 2: Overall significance of the model############################## 
 
 #Compare our best logistic regression model against null model
-lrtest(model_03_logreg)
+lrtest(model_02_logreg)
 
 # We can see that the low p value indicates the model is highly significant i.e.
 # the likelihood of a customer responding to the campaign (TARGET) depends on
 # independent x variables in the dataset.
-
 
 
 ########## Step 3: McFadden or pseudo R² interpretation############################## 
@@ -725,7 +850,7 @@ lrtest(model_03_logreg)
 
 ##Goodness of fit packages & measures
 library(pscl)
-model_fit <- pR2(model_03_logreg)
+model_fit <- pR2(model_02_logreg)
 print(model_fit)
 
 #retrieve just the mcfadden r2 from model_fit
@@ -746,24 +871,25 @@ pseudoR_func(model_fit[4])
 ########## Step 4: Individual coefficients significance and interpretation############################# 
 
 #library(coef.lmList)
-summary(model_03_logreg)
+summary(model_02_logreg)
+
+#prints confidence intervals
+exp(confint(model_02_logreg))
+
 
 # The Odds Ratio and Probability of each x variable is calculated based on the
 # formulae, Odds Ratio = exp(Co-efficient estimate) Probability = Odds Ratio /
 # (1 + Odds Ratio)
 
-
 #plot coefficients on odds ratio
 library(sjPlot)
-plot_model(model_03_logreg, vline.color = "red",
+plot_model(model_02_logreg, vline.color = "red",
   sort.est = TRUE, show.values = TRUE)
 
-#prints confidence intervals
-exp(confint(model_03_logreg))
 
 ######Step 5: Model Accuracy#################
 
-pred <- predict(model_03_logreg, test_data, type = "response") #predict using test data
+pred <- predict(model_02_logreg, test_data, type = "response") #predict using test data
 
 #check results
 head(pred)
@@ -780,7 +906,7 @@ sum(diag(contingency_tab))/sum(contingency_tab) *100
 # Confusion Matrix using the caret package to validate above
 caret::confusionMatrix(contingency_tab)
 
-#Our model leads to approx 90% of correct predictions
+#Our model leads to rougly 90% of correct predictions
 
 ######### Step 6: Model Diagnostics - ROC/AUC/K-Fold CV #################
 
@@ -805,13 +931,13 @@ plot(prf)
 #False positive rate on the x-axis
 
 #The larger the AUC, the better the classifier
-#The AUC aline is insufficient to identify a best model
+#The AUC line is insufficient to identify a best model
 #It's used in combination with qualitative examination
 #of the ROC curve
 auc <- performance(pr, measure = "auc")
 auc
 
-# AUC is 0.9074364
+# AUC is 0.8781366 - definitely a B
 as.numeric(performance(pr, measure = "auc")@y.values)
 
 #AUC Interpretation
@@ -839,30 +965,26 @@ str(folds)
 
 ######### Step 7: Variable Importance #################
 
-#Let's look at the abasolute value of the t-statistic for
+#Let's look at the absolute value of the t-statistic for
 #each model parameter using caret package
-varImp(model_03_logreg)
+varImp(model_02_logreg)
 
 #########Summary of Conclusions from Log Regression Model#################
 
-# Positive correlation - should contact customers with these characteristics
-# - has a balance
-# -education - tertiary or secondary education
-#  - or
-#  -being single
-# if the customer had successfully responded to a prior campaign before
-# 
-# Some months are more successful than others:
-# - mar oct sep dec jun
-# there are perhaps cost savings in running
-# this type of campaign during these specific
-# months
+# Marketing should contact customers with these characteristics
+# - age
+# - marital status - single
+# - had responded to a previous campaign
+# - duration
+# Contact on these days of the week  
+#   - but especially Tuesday & Wednesday
 
-# Negative correlation - do not contact customers with these characteristics
-# -if customer has a personal loan
-#- if customer has a mortgage loan
-#-also if has credit currently in default with the bank
-#- contact method is unknown which makes sense
+#Marketing should not contact customers with these characteristics
+# - education > basic.9y  
+# - has contacttelephone  
+# - has defaulted
+# - has a personal_loan1
+
 
 #The bank should limit the number of contacts it has with
 # a customer. What's most likely happening is that customers
@@ -872,182 +994,105 @@ varImp(model_03_logreg)
 
 ############ML Model 2: Decision Tree ###########
 
-str(bank_data)
+#######Step 1: Test/Train Split on trimmed dataset###################
+ bank_data2 <- bank_data %>% 
+  select(-campaign_date, -job, -pdays,
+         -poutcome, -emp.var.rate, -cons.price.idx,
+                       -euribor3m, -nr.employed, 
+                       -month, -prior_contact)
 
-#######Step 1: Train/Test Split dataset###################
+#check results
+names(bank_data2)
 
-#recode target variable to classification variable
-str(bank_data$target)
-bank_data$target <- as.factor(bank_data$target)
-str(bank_data$target) #check results
-
-# Step 1: Get total number of rows in the data frame
-n <- nrow(bank_data)
-
-# Step 2: Number of rows for the training set (80% of the dataset)
-n_train <- round(.80 * n) 
-
-# Step 3: get a vector of indexes of a random sample. set a seed to get reproducible results
-#In this case, Create a vector of indices which is an 80% random sample
 set.seed(123)
-train_indices <- sample(1:n, n_train)
-
-## Step 3: Subset the data for the training indices only
-# Subset the data frame to training indices only
-bank_train <- bank_data[train_indices, ]  
-  
-# Step 4: Exclude the training indices to create the test set
-bank_test <- bank_data[-train_indices, ]  
+## split the dataset into training and test samples at 70:30 ratio
+split2 <- sample.split(bank_data2$target, SplitRatio = 0.7)
+train_data2 <- subset(bank_data2, split == TRUE)
+test_data2 <- subset(bank_data2, split == FALSE)
 
 #######Step 2: Build the decision tree ###################
 
-#train the classification tree model
-tree_bank <- tree(target ~ .-job, data = bank_train)
 
-tree_bank
-
-par(mfrow = c(1,2), xpd = NA) # otherwise on some devices the text is clipped
-plot(tree_bank)
-text(tree_bank)
-
-#Duration < 364.5 is the first variable split in the tree; however, after reading
-#the documentation about this variable, perhaps should build a tree without this variable
-
-#how to read the tree # duration: with duration -
-# last contact duration, in seconds (numeric). Important note: this
-# attribute highly affects the output target (e.g., if duration=0 then y='no').
-# Yet, the duration is not known before a call is performed. Also, after the end
-# of the call y is obviously known. Thus, this input should only be included for
-# benchmark purposes and should be discarded if the intention is to have a
-# realistic predictive model.
-
-
-#tree without duration
-# pdays: number of days that passed by after the client was last contacted from
-# a previous campaign (numeric; 999 means client was not previously contacted)
-#
-
-
-#re-build tree without duration variable
-tree_bank_nodur <- tree(target~. -job -duration, data = bank_train)
+# build the simplest classification tree model with C50
+library(C50)
+model_03_tree <- C5.0(x = train_data2[,-13], y = train_data2$target)
 
 # The summary() function lists the variables that are used as internal nodes in
 # the tree, the number of terminal nodes, and the (training) error rate.
-summary(tree_bank_nodur)
+summary(model_03_tree)
+#Error rate is 6.8%
 
-# We use the plot() function to display the tree structure, and the text()
-# function to display the node labels. The argument pretty=0 instructs R to
-# include the category names for any qualitative predictors, rather than simply
-# displaying a letter for each category.
+#re-build tree without duration variable
+model_04_tree <- C5.0(x = train_data2[,c(1:5, 7:12)], y = train_data2$target)
 
-par(mfrow=c(1,1)) #reset plot parameters
-#run dev.off() a few times, and then try to plot again.
-#Run options(device = "RStudioGD"), and try to plot again.
-#dev.off() 
-
-#plot the new tree
-plot(tree_bank_nodur)
-text(tree_bank_nodur, pretty=0)
-
-
-# In order to properly evaluate the performance of a classification tree on
-# these data, we must estimate the test error rather than simply computing the
-# training error. We split the observations into a training set and a test set,
-# build the tree using the training set, and evaluate its performance on the
-# test data. The predict() function can be used for this purpose.
-
-
-library(rpart)
-library(rpart.plot)
-#Let's use rpart package
-#train the classification tree model
-class_tree <- rpart(target~. -job, data = bank_train, method="class")
-
-# Draw the decision tree
-fancyRpartPlot(class_tree)
-
-#tree with no duration
-class_tree_b<- rpart(target ~ . -job -duration, data = bank_train, method="class")
-
-# Draw the decision tree
-fancyRpartPlot(class_tree_b)
+summary(model_04_tree)
 
 
 ################Step 3 : Evaluate Model Performance & Accuracy #############
 
+#Model 3
 # Generate predicted classes using the model object
-class_prediction <- predict(object = tree_bank,  
-                        newdata = bank_test,   
+class_prediction <- predict(object = model_03_tree,  
+                        newdata = test_data2,   
                         type = "class")  
                             
 # Calculate the confusion matrix for the test set
 confusionMatrix(data = class_prediction,       
-                reference = bank_test$target) 
+                reference = test_data2$target) 
+
+#Model 4
+# Generate predicted classes using the model object
+class_prediction2 <- predict(object = model_04_tree,  
+                        newdata = test_data2,   
+                        type = "class")  
+                            
+# Calculate the confusion matrix for the test set
+confusionMatrix(data = class_prediction2,       
+                reference = test_data2$target) 
 
 #The data argument takes a vector of predicted class labels on a test set
 #the reference argument a vector of the true class labels
 
-#####RESULTS: Decision tree is 89% accurate
+#Both models gave the same amount of accuracy
+#but model 2 had more Type I and Type II errors
 
-# Next, we consider whether pruning the tree might lead to improved results. The
-# function cv.tree() performs cross-validation in order to cv.tree() determine
-# the optimal level of tree complexity; cost complexity pruning is used in order
-# to select a sequence of trees for consideration. We use the argument
-# FUN=prune.misclass in order to indicate that we want the classification error
-# rate to guide the cross-validation and pruning process, rather than the
-# default for the cv.tree() function, which is deviance. The cv.tree() function
-# reports the number of terminal nodes of each tree considered (size) as well as
-# the corresponding error rate and the value of the cost-complexity parameter
-# used (k, which corresponds to α in (8.4)).
-
-set.seed(3)
-cv_tree_bank<- cv.tree(tree_bank,FUN=prune.misclass )
-names(cv_tree_bank)
-
-cv_tree_bank
-
-# Note that, despite the name, dev corresponds to the cross-validation error
-# rate in this instance. The tree with 1 terminal nodes results in the lowest
-# cross-validation error rate, with 32 cross-validation errors. We plot the
-# error rate as a function of both size and k.
-
-#par(mfrow=c(1,2))
-par(mar=c(1,1,1,1))
-plot(cv_tree_bank$size, cv_tree_bank$dev,type="b")
-
-plot(cv_tree_bank$k, cv_tree_bank$dev,type="b")
-
-#The tree with either 10 or 5 terminal modes results in the lowest cross-validatione error rate
-#with 3944 cross-validation errors.
-
-##############Step 4: Prune Tree###################
-
-# We now apply the prune.misclass() function in order to prune the tree to prune.
-# obtain the 5th
-prune_tree_bank<- prune.misclass (tree_bank, best=5)
-par(mar=c(1,1,1,1))
-plot(prune_tree_bank)
-text(prune_tree_bank,pretty=0)
-
-#let's try again with 10
-prune_tree_bank<- prune.misclass (tree_bank, best=10)
-par(mar=c(1,1,1,1))
-plot(prune_tree_bank)
-text(prune_tree_bank,pretty=0)
+#What about the Kappa?
+#Interpretation of Cohen's Kappa
+#Model 1 had a higher Kappa .5043 vs. 0.2943
 
 
+##### Step 4: Can we improve the model? #####
 
+#Boosting the tree algorithm
+model_05_boost <- C5.0(x = train_data2[,-13], y = train_data2$target, trials = 10)
+
+# The summary() function lists the variables that are used as internal nodes in
+# the tree, the number of terminal nodes, and the (training) error rate.
+summary(model_05_boost)
+
+# Generate predicted classes using the model object
+class_prediction3 <- predict(object = model_05_boost,  
+                        newdata = test_data2,   
+                        type = "class") 
+
+confusionMatrix(data = class_prediction3,       
+                reference = test_data2$target) 
+
+CrossTable(test_data2$target, class_prediction3)
+#this model predicted correctly 46% - we didn't really improve the model
+# significantly with the boosted model
 
 #########Summary of Insights from Tree Model#################
 
-#without duration variable, poutcome 
-# becomes the most
-#important variable,
-#if customer has a mortgage loan
+# After duration, cons.conf.index, age, previous
+# response to marketing campaign, contact method
+# are the most import factors. Other demographics
+# follow: marital status, education. Then whether
+# or not the respondent had a default and then day
+# of the week.
 
 ######## Final conclusion ##########
 
+#The results of the tree model are similar
+#to those insights gathered from our logistic regression model
 
-#Strongly believe that the logistic regression model
-#offers better insights and performance than the tree model for marketing
-#purposes.
