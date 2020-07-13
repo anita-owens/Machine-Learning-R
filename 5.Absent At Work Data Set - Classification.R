@@ -147,9 +147,10 @@ str(df)
 df <-df[-1]
 
 # Build Correlation Matrix structure for plotting:
+#remove correlation coefficients from plot
 df %>% 
   cor() %>% 
-    corrplot(type = "upper", insig = "blank", diag = FALSE, addCoef.col = "grey")
+    corrplot(type = "upper", insig = "blank", diag = FALSE)#, addCoef.col = "grey")
 
 #coefficients for correlation matrix
 res <- cor(df)
@@ -168,7 +169,13 @@ round(res, 2)
  # .4 - .6 - moderate
  # .2 - .4 - weak
  # 0 - .2 none to extremely weak
- 
+
+
+#Threshold for correlation
+#Cohen's rule of thumb (if data are normally distributed)
+# r = 0.1 weak
+# r = 0.3 medium
+# r = 0.5 strong
  
 #Service time and age seems to be positive strong correlation as
 #well as BMI & weight which is expected
@@ -177,7 +184,10 @@ round(res, 2)
 # social drinker
  
 #There are some interesting and unexpected high correlations
-#between transportion expense with pet and son (number of children)
+#between transportation expense with pet and son (number of children)
+#could be a sign of multi-collinearity
+
+#Will investigate later
 
  
 ##### Target variable ##############
@@ -309,22 +319,23 @@ p_value_wilcox < .05
 # of workers who miss hours but the avg time missed is relatively short
 # (3 hours or less)
 
-#######ML Model: Regression - Split dataset into development (train) and holdout (validation or test) sets#######
+
+####### Data transformation ##############
+
+#######ML Model: Regression - To establish Baseline and Relationship#######
+
 glimpse(df)
 
-library(caTools)
-set.seed(123)
+linear_model_01 <- lm(hrs_absent ~ ., data = df)
 
-## split the dataset into training and test samples at 70:30 ratio
-split <- sample.split(df$hrs_absent, SplitRatio = 0.7)
-train_data <- subset(df, split == TRUE)
-test_data <- subset(df, split == FALSE)
+coef(linear_model_01)
 
-## Check if distribution of partition data is correct for the development dataset
-prop.table(table(train_data$target))
-prop.table(table(test_data$target)) 
+summary(linear_model_01)
 
-# The prop.table output above confirms that the imbalanced dataset
-# characteristic that we saw in the original dataset is maintained at the same
-# proportions in the development and hold out samples as well. The training
-# dataset is now ready to build the model.
+#Let's visualize the coefficients
+library(coefplot)
+coefplot(linear_model_01, intercept=FALSE,
+  ylab = "Features",
+  xlab = "Association with
+  Hours Absent")
+
