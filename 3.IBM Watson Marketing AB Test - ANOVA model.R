@@ -242,6 +242,9 @@ pairwise.wilcox.test(df$SalesInThousands, df$Promotion,
 #2 groups to compare so we could see significant
 #results quite fast.
 
+# Having a proper control group for comparison to be able
+# to calculate the impact of the promotions
+
 #It appeared in group 1 there were some stores that were slightly
 #younger than those in Group 3
 #it may not have made a difference
