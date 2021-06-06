@@ -16,6 +16,9 @@ PROJECT 3: A/B TEST ANALYSIS
 
 The goal of project three is to analyze the results of an experiment whereby a chain of department stores that ran 3 promotions. The marketing team wants to know which promotion was the most effective in generating sales. The deliverable is to inform the marketing team on the results of the impact of the experiment.
 
+![PlotMeans Rplot](https://user-images.githubusercontent.com/13710429/120935307-64cdc100-c702-11eb-83e2-bac34583a05c.png)
+
+
 
 PROJECT 4: PREDICT ONLINE SHOPPING BEHAVIOR
 
