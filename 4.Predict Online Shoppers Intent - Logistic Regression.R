@@ -74,18 +74,13 @@ browseURL("https://archive.ics.uci.edu/ml/datasets/Online+Shoppers+Purchasing+In
 
 ##########Import Data###################
 
-getwd() #check working directory
+#import file
+dataset <- read.csv("~/Documents/GitHub/Machine-Learning-R/Machine-Learning-R/datasets/online_shoppers_intention.csv", sep = ',')
 
-#change wd
-setwd("/Users/anitaowens/R_Programming/UCI Machine Learning Repo/Online Shoppers") #change working directory
+head(dataset) #check results
 
-getwd() #check working directory
-
-
-dataset <- read.csv("online_shoppers_intention.csv", sep = ',')
-
-head(dataset)
-table(dataset$Revenue) #the variable we're trying to predict
+#variable of interest or the variable we're trying to predict
+table(dataset$Revenue)
 
 
 ########Review the data structure - Explore dataset###########

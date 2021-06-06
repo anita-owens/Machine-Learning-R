@@ -10,18 +10,6 @@
 #Can we predict which customers are more likely to subscibe?
 
 
-######Set Working Directory########
-
-
-
-getwd() #check working directory
-
-#change wd
-setwd("/Users/anitaowens/Dropbox/Marketing Analytics-Data Driven Techniques with Excel/Excel Files/Chapter 17 Excel Files") #change working directory
-
-getwd() #check working directory
-
-
 
 ######Load Libraries########
 library(tidyverse)
@@ -35,11 +23,11 @@ library(rpart)
 
 #####Import Data#########
 
-subscribed <- read.csv(file = "subscribed_data.csv", sep = ",")
-
+#Import the full dataset
+subscribed <- read.csv("~/Documents/GitHub/Machine-Learning-R/Machine-Learning-R/datasets/subscribed_data.csv", sep = ',')
 
 #check results
-glimpse(subscribed)
+str(subscribed)
 
 
 #########Inspect and get to know the data###########

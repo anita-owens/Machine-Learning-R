@@ -1,0 +1,1262 @@
+---
+title: "Telco Customer Churn"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+## Step 1: Get data
+
+```{r Load libraries, message=FALSE, warning=FALSE, include=FALSE}
+#Core & stats packages
+library(tidyverse)
+library(psych)
+library(gmodels)
+library(VIM)
+library(ggcorrplot)
+library(corrplot)
+
+#Data visualization packages
+library(explore)
+library(RColorBrewer)
+library(ggthemes)
+library(ggpubr)
+library(sjPlot)
+
+#Modeling packages
+library(caTools)
+library(car)
+library(glmnet)
+library(caret)
+library(ROCR)
+library(PRROC)
+library(randomForest)
+library(pROC)
+library(rpart)
+library(rpart.plot)
+library(ModelMetrics)
+```
+
+
+
+```{r Check wd, echo = FALSE}
+
+setwd("/Users/anitaowens/R_Programming/HI Bootcamp")
+getwd()
+```
+
+```{r Load dataset}
+df <- read.csv("~/R_Programming/HI Bootcamp/Telco-Customer-Churn.csv")
+```
+
+
+## Step 2: Explore Data
+Spot problems
+
+```{r Check structure}
+str(df)
+#7043 obs and 21 vars
+```
+
+
+
+
+```{r Explore Data Interatively}
+#Explore data interactively with Explore package
+#explore(df) #uncomment to run
+
+#we have several different measures in the dataset
+```
+
+
+
+```{r Establish churn rate baseline - that is what we are interested in}
+#churn rate baseline
+(churn.base <- df %>% 
+  group_by(Churn) %>% 
+  count(Churn) %>% 
+  mutate(perc = n/nrow(df) * 100) %>% 
+  rename(customers = n))
+
+
+
+#ordered bar plots - need to arrange column in desc order b4 plotting
+ggbarplot(churn.base, x = "customers", y = "perc",               
+         fill = "Churn", 
+         color = "white",
+         palette = "jco",
+          sort.val = "desc",          # Sort the value in dscending order
+          sort.by.groups = FALSE,     # Don't sort inside each group
+          x.text.angle = 0,          # Rotate vertically x axis texts
+          legend = "right",
+          xlab = " Churn",
+          ylab = " Percentage",
+          label = paste(round(churn.base$perc,0),"%", sep = ""),
+          label.pos = "out",
+          title = "Churn rate baseline",
+          ggtheme = theme_minimal()
+         )
+
+table(df$Churn)
+prop.table(table(df$Churn))
+
+#Our churn rate is 27%
+```
+
+
+```{r Univariate Analysis: Barplots for important categorical variables (x)}
+
+
+# Don't map a variable to y
+  ggplot(df, aes(x=factor(gender)))+
+  geom_bar(stat="count", width=0.7, fill="#a6cee3")+
+  theme_minimal()
+
+  ggplot(df, aes(x=factor(SeniorCitizen)))+
+  geom_bar(stat="count", width=0.7, fill="#1f78b4")+
+  theme_minimal()
+
+  ggplot(df, aes(x=factor(Partner)))+
+  geom_bar(stat="count", width=0.7, fill="#b2df8a")+
+  theme_minimal()
+
+  ggplot(df, aes(x=factor(Dependents)))+
+  geom_bar(stat="count", width=0.7, fill="#33a02c")+
+  theme_minimal()
+
+  ggplot(df, aes(x=factor(PhoneService)))+
+  geom_bar(stat="count", width=0.7, fill="#fb9a99")+
+  theme_minimal()
+
+  ggplot(df, aes(x=factor(MultipleLines)))+
+  geom_bar(stat="count", width=0.7, fill="#e31a1c")+
+  theme_minimal()
+
+  ggplot(df, aes(x=factor(InternetService)))+
+  geom_bar(stat="count", width=0.7, fill="#fdbf6f")+
+  theme_minimal()
+
+  ggplot(df, aes(x=factor(OnlineSecurity)))+
+  geom_bar(stat="count", width=0.7, fill="#ff7f00")+
+  theme_minimal()
+
+  ggplot(df, aes(x=factor(OnlineBackup)))+
+  geom_bar(stat="count", width=0.7, fill="#cab2d6")+
+  theme_minimal()
+
+  ggplot(df, aes(x=factor(DeviceProtection)))+
+  geom_bar(stat="count", width=0.7, fill="#6a3d9a")+
+  theme_minimal()
+
+  ggplot(df, aes(x=factor(TechSupport)))+
+  geom_bar(stat="count", width=0.7, fill="#ffff99")+
+  theme_minimal()
+
+  ggplot(df, aes(x=factor(StreamingTV)))+
+  geom_bar(stat="count", width=0.7, fill="#b15928")+
+  theme_minimal()
+
+
+
+  ggplot(df, aes(x=factor(StreamingMovies)))+
+  geom_bar(stat="count", width=0.7, fill="#8dd3c7")+
+  theme_minimal()
+
+  ggplot(df, aes(x=factor(Contract)))+
+  geom_bar(stat="count", width=0.7, fill="#ffffb3")+
+  theme_minimal()
+
+  ggplot(df, aes(x=factor(PaperlessBilling)))+
+  geom_bar(stat="count", width=0.7, fill="#bebada")+
+  theme_minimal()
+  
+  ggplot(df, aes(x=factor(PaymentMethod)))+
+  geom_bar(stat="count", width=0.7, fill="#fb8072")+
+  theme_minimal() + coord_flip()
+
+```
+
+
+
+```{r Univariate Analysis:  Histograms for numeric variables, eval=FALSE, include=FALSE}
+
+  ggplot(data = df, aes(x = tenure))+
+      geom_histogram(fill = "#e41a1c", binwidth = 5, colour = "black") +
+      geom_vline(aes(xintercept = median(tenure)), linetype = "dashed") + theme_tufte() + ylab("Counts")
+#bi-modal distribution
+
+  ggplot(data = df, aes(x = MonthlyCharges))+
+      geom_histogram(fill = "#377eb8", binwidth = 5, colour = "black") +
+      geom_vline(aes(xintercept = median(tenure)), linetype = "dashed") + theme_tufte() + ylab("Counts")
+#bi-modal
+
+  ggplot(data = df, aes(x = TotalCharges))+
+      geom_histogram(fill = "#e41a1c", binwidth = 5, colour = "black") +
+      geom_vline(aes(xintercept = median(tenure)), linetype = "dashed", color = "#e41a1c") + labs(title = "Total charges") + theme_tufte() + ylab("Counts")
+#right-skew
+
+  #Total Charges on log
+  ggplot(data = df, aes(x = TotalCharges))+
+      geom_histogram(fill = "#377eb8", binwidth = 5, colour = "black") +
+      geom_vline(aes(xintercept = median(tenure)), linetype = "dashed") + scale_x_log10() + labs(title = "Total charges on log") + theme_tufte() + ylab("Counts")
+#still a bit of skew
+
+
+```
+
+
+
+
+```{r Bivariate Analysis: Boxplots for important (x) categorical variables & (y) numeric variables}
+
+#gender on x axis
+ggplot(data = df, aes(x = gender, y = MonthlyCharges, fill = gender))+geom_boxplot() + stat_summary(fun=mean, geom="point", shape=20, size=8, color="red", fill="red")
+
+ggplot(data = df, aes(x = gender, y = TotalCharges, fill = gender))+geom_boxplot()
+
+ggplot(data = df, aes(x = gender, y = tenure, fill = gender))+geom_boxplot()
+
+
+#phone service on x axis
+ggplot(data = df, aes(x = PhoneService, y = MonthlyCharges, fill = PhoneService))+geom_boxplot()
+
+ggplot(data = df, aes(x = PhoneService, y = TotalCharges, fill = PhoneService))+geom_boxplot()
+
+ggplot(data = df, aes(x = PhoneService, y = tenure, fill = PhoneService))+geom_boxplot()
+
+#contract on x axis
+ggplot(data = df, aes(x = Contract, y = MonthlyCharges, fill = Contract))+geom_boxplot() + stat_summary(fun=mean, geom="point", shape=20, size=8, color="red", fill="red") + coord_flip()
+#Similar avg monthly charges across all the different term plans,
+#with the largest variability amongst 1-year contract holders
+
+ggplot(data = df, aes(x = Contract, y = TotalCharges, fill = Contract))+geom_boxplot() # some missing values
+#higher than avg total charges for those on 2-year contracts
+
+ggplot(data = df, aes(x = Contract, y = tenure, fill = Contract))+geom_boxplot()
+#The longer the contract the longer the average customer tenure with -year contract giving the highest avg tenure. Makes sense!
+```
+
+
+```{r Bivariate analysis: Boxplots for CHURN (as x variable) vs important numeric (y variables)}
+
+ggplot(data = df, aes(x = factor(Churn), y = tenure, fill = Churn)) +geom_boxplot()
+#High churn for those with lower tenures
+
+ggplot(data = df, aes(x = factor(Churn), y = MonthlyCharges, fill = Churn))+geom_boxplot()
+#Higher churn for those with higher than avg monthly charges
+
+ggplot(data = df, aes(x = factor(Churn), y = TotalCharges, fill = Churn))+geom_boxplot()
+#Lower churn for those with lower than avg total charges
+
+```
+
+
+
+```{r Bivariate Analysis: Stacked bar charts for important categorical variables (x) by CHURN (y) factor}
+
+ggplot(data = df, aes(x=gender, fill = factor(Churn))) + geom_bar(position = "fill") + scale_fill_manual(values = c("#1b9e77", "#d95f02")) + theme(
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    text=element_text(size=14,  family="Helvetica")) + labs(x = " ", title = "Churn by gender")
+#no difference by gender
+
+
+ggplot(data = df, aes(x=Contract, fill = factor(Churn)))+ geom_bar(position = "fill") + scale_fill_mconfuanual(values = c("#1b9e77", "#d95f02")) + theme(
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    text=element_text(size=14,  family="Helvetica")) + labs(x = " ", title = "Contract type") + coord_flip()
+#We have significantly higher churn than for those on month-to-month contracts
+
+
+ggplot(data = df, aes(x=factor(SeniorCitizen), fill = factor(Churn)))+ geom_bar(position = "fill") + scale_fill_manual(values = c("#1b9e77", "#d95f02")) + theme(
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    text=element_text(size=14,  family="Helvetica")) + labs(x = " ", title = "Is a senior citizen")
+#Higher churn for Senior Citizens
+
+
+ggplot(data = df, aes(x=PaperlessBilling, fill = factor(Churn))) + geom_bar(position = "fill") + scale_fill_manual(values = c("#1b9e77", "#d95f02")) + theme(
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    text=element_text(size=14,  family="Helvetica")) + labs(x = " ", title = "Has paperless billing")
+#higher churn rate for those on paperless billing
+
+ggplot(data = df, aes(x=PaymentMethod, fill = factor(Churn))) + geom_bar(position = "fill") + scale_fill_manual(values = c("#1b9e77", "#d95f02")) + theme(
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    text=element_text(size=12,  family="Helvetica")) + labs(x = " ", title = "Payment Method") + coord_flip() 
+#higher churn rate for those who pay by electronic
+#check - lowest churn rates among those with
+#automatic billing.
+
+ggplot(data = df, aes(x=PhoneService, fill = factor(Churn))) + geom_bar(position = "fill") + labs(title = "By phone service")
+#no difference by phone service
+
+
+ggplot(data = df, aes(x=Partner, fill = factor(Churn))) + geom_bar(position = "fill") + scale_fill_manual(values = c("#1b9e77", "#d95f02")) + theme(
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    text=element_text(size=12,  family="Helvetica")) + labs(x = " ", title = "Has a partner") 
+#slightly higher churn rate for singles
+
+
+ggplot(data = df, aes(x=Dependents, fill = factor(Churn))) + geom_bar(position = "fill") + scale_fill_manual(values = c("#1b9e77", "#d95f02")) + theme(
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    text=element_text(size=12,  family="Helvetica")) + labs(x = " ", title = "Has dependents") + coord_flip() 
+#higher churn rate for those with no dependents
+
+ggplot(data = df, aes(x=MultipleLines, fill = factor(Churn))) + geom_bar(position = "fill") + labs(title = "Has multiple phone lines")
+##very little difference if have multiple lines
+
+
+ggplot(data = df, aes(x=InternetService, fill = factor(Churn))) + geom_bar(position = "fill") + scale_fill_manual(values = c("#1b9e77", "#d95f02")) + theme(
+    plot.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    text=element_text(size=12,  family="Helvetica")) + labs(x = " ", title = "Internet service") + coord_flip() 
+#Much higher churn if have fiber optic internet service
+
+
+ggplot(data = df, aes(x=OnlineSecurity, fill = factor(Churn))) + geom_bar(position = "fill") + coord_flip() + labs(title = "Online security")
+#higher churn if have no online security
+
+ggplot(data = df, aes(x=OnlineBackup, fill = factor(Churn))) + geom_bar(position = "fill") + coord_flip() + labs(title = "Online backup")
+#higher churn for those who have no online backup
+
+ggplot(data = df, aes(x=DeviceProtection, fill = factor(Churn))) + geom_bar(position = "fill") + coord_flip() + labs(title = "Device protection")
+#higher churn for those who have no device protection
+
+ggplot(data = df, aes(x=TechSupport, fill = factor(Churn))) + geom_bar(position = "fill") + coord_flip() + labs(title = "Tech support")
+#higher churn for those with no tech support
+
+ggplot(data = df, aes(x=StreamingTV, fill = factor(Churn))) + geom_bar(position = "fill") + labs(title = "Streaming TV")
+#no difference among TV streamers - but very low churners if you don't have internet service
+
+ggplot(data = df, aes(x=StreamingMovies, fill = factor(Churn))) + geom_bar(position = "fill") + labs(title = "Streaming movies")
+#no difference among movie streamers - but very low churners if you don't have internet service
+```
+
+
+```{r Multivariate Analysis - Scatterplots and log transformation}
+
+ggplot(data = df, aes(x=MonthlyCharges, y=tenure, color=factor(Churn))) + geom_point(alpha = 0.5) + geom_smooth(method=lm) + labs(title = " ")
+#lots of vertical lines - no horizontal patterns
+#suggests that monthly charges has some association with churn as the churned customers are heavily represented on the higher end of the monthly charges
+#there is most likely a higher likelihood of churn once you reach a certain point on the monthly fee
+
+
+#believe that total charges can also be a proxy for tenure-hence the triangle looking scatterplot
+ggplot(data = df, aes(x=TotalCharges, y=tenure, color=factor(Churn))) + geom_point(alpha = 0.5) +geom_smooth(method=lm) + labs(title = " ")
+
+#histogram of tenure
+hist(df$tenure)
+
+#log transformation
+ggplot(data = df, aes(x=MonthlyCharges, y=tenure, color=factor(Churn))) + geom_point(alpha = 0.5) + geom_smooth(method=lm) + scale_x_log10() + scale_y_log10() + labs(title = "Log transformation")
+
+ggplot(data = df, aes(x=TotalCharges, y=tenure, color=factor(Churn))) + geom_point(alpha = 0.5) +geom_smooth(method=lm) + scale_x_log10() + labs(title = "Log transformation")
+
+#Tenure and total charges are possibly collinear or bordering on collinearity!
+```
+
+
+
+
+
+```{r 2-Way Cross Tabulation Tables to compare categorical variables - Internet Service}
+
+#Internet Service
+CrossTable(df$InternetService, df$Churn, digits=2, prop.c = TRUE,
+  prop.r = TRUE, prop.t = FALSE, chisq = FALSE, format = "SAS", expected = FALSE)
+#
+
+table(df$InternetService, df$Churn)
+
+round(addmargins(prop.table(table(df$InternetService, df$Churn))),3)
+
+
+#Statistical test
+chisq.test(df$Churn, df$InternetService)
+
+
+```
+
+
+```{r 2-Way Cross Tabulation Tables to compare categorical variables - Contract}
+#Contract
+CrossTable(df$Contract, df$Churn, digits=2, prop.c = TRUE,
+  prop.r = TRUE, prop.t = FALSE, chisq = FALSE, format = "SAS", expected = FALSE)
+#
+
+table(df$Contract, df$Churn)
+
+round(addmargins(prop.table(table(df$Contract, df$Churn))),3)
+
+#statistical test
+chisq.test(df$Churn, df$Contract)
+```
+
+```{r Create bins for monthly charges to explore data, echo=TRUE}
+
+#Let's take age and put it into buckets
+#let's get min and max Monthly Charge 
+min(df$MonthlyCharges)
+max(df$MonthlyCharges)
+mean(df$MonthlyCharges)
+median(df$MonthlyCharges)
+
+#quartiles
+ggplot(df, aes(y=MonthlyCharges)) + geom_boxplot()
+
+#quantiles - takes a vector of proportions
+quantile(df$MonthlyCharges, probs = c(0, 0.2, 0.4, 0.6, 0.8,1))
+
+#create monthly fee bands
+df$monthly_fee_bin <- cut(df$MonthlyCharges, 
+                   breaks= 5, 
+                   labels=c("bin1", "bin2", "bin3", "bin4", "bin5"), 
+                   right=FALSE)
+
+table(df$monthly_fee_bin) #check results
+
+
+#check averages across the different fee bands
+(fees <- df %>%  
+  group_by(monthly_fee_bin) %>% 
+  summarize(avg_monthly_fee = format(round(mean(MonthlyCharges),2)),
+            median_monthly_fee = format(round(median(MonthlyCharges),2))))
+
+
+#visualize fee bands
+ggplot(data = df, aes(x=monthly_fee_bin, fill = factor(Churn))) + geom_bar(position = "fill")
+```
+
+##Step 3: Manage data
+
+
+```{r Check for Missing Data - Remove Missing Data}
+#any missing data?
+
+#Using VIM package
+missing <- aggr(df, prop = TRUE, bars = TRUE) # - some missing values
+
+summary(missing)
+
+## Show cases with missing values
+(missing.df <- df[!complete.cases(df),]) #11 rows
+#Some total charges missing
+
+#We can remove missing rows - removing them won't affect our results that much - this is the code to remove below
+df <- df[complete.cases(df),] 
+
+
+#check results
+sum(is.na(df$TotalCharges)) #all gone
+
+#visualize entire dataframe again
+aggr(df, prop = TRUE, bars = TRUE)
+```
+
+
+```{r Check for duplicate data}
+#any duplicate rows -
+anyDuplicated(df)
+
+#any duplicate columns -
+names(df)[duplicated(names(df))]
+
+df[names(df)[!duplicated(names(df))]]
+
+```
+
+There were no duplicates to worry about
+
+
+
+## Step 4: Statistical analysis & understanding relationships
+
+Now we want to dig deeper
+We have some ideas of what to look for thanks to our EDA
+
+
+```{r Pairs function}
+#pairs.panels
+df %>% 
+  select_if(is.numeric) %>% 
+  scale() %>% 
+    pairs.panels()
+
+#Tenure and TotalCharges has a very high correlation coefficient!
+#Also shows us that SeniorCitizen is coded as a numerical variable (0 or 1)
+#Monthly charges and TotalCharges has a high correlation coefficient also.
+```
+
+
+
+```{r Correlation matrix for numeric variables}
+
+#Correlation Matrix
+df %>% 
+  select_if(is.numeric) %>% 
+  cor() %>% 
+    corrplot(type = "upper", insig = "blank", addCoef.col = "black", diag=FALSE)
+#monthly charges is highly-correlated with total charges which makes sense. at 0.65.
+# I take these results with a grain of salt.
+
+#total charges and tenure has a high correlation.83
+#which is bordering on collinearity
+```
+
+
+```{r Recode churn character variable into a numeric variable}
+str(df$Churn)
+
+(churnRate <- round(prop.table(table(df$Churn)),5))
+(churn_rate_overall <- churnRate[[2]])
+
+# recode churn variable into a numeric variable
+df <- df %>% 
+      mutate(Churn = ifelse(Churn == "Yes", 1, 0)) 
+
+#check results
+head(df$Churn)
+```
+
+
+```{r Churn rate by contract type, echo=FALSE, warning=FALSE}
+#data frame grouped by contract
+contract.df <- df %>% 
+  group_by(Contract) %>% 
+  summarize(total_count = n(),
+    total_churns = sum(Churn)) %>% 
+  mutate(churn_rate = total_churns/total_count)
+
+contract.df #check results
+
+#check churn columns
+sum(contract.df$total_churns)
+sum(contract.df$total_count)
+
+#add highlight flag column
+contract.df <- contract.df %>% 
+mutate(highlight_flag =
+    ifelse(churn_rate > churn_rate_overall, 1, 0))
+
+#check results
+head(contract.df$highlight_flag)
+
+#plot response rate by cat var
+ggplot(data=contract.df, aes(x=reorder(Contract, churn_rate), y=churn_rate,
+  fill = factor(highlight_flag))) +
+  geom_bar(stat="identity") +
+  geom_hline(yintercept=churn_rate_overall, linetype="dashed", color = "black") +
+  theme(axis.text.x = element_text(angle = 90)) +
+  coord_flip() +
+    scale_fill_manual(values = c('#595959', '#e41a1c')) +
+  labs(x = ' ', y = 'Churn Rate', title = str_c("Churn rate by contract")) +
+  theme(legend.position = "none")
+```
+
+
+
+```{r Churn rate by monthly fee level}
+
+#data frame grouped by fee
+monthly.fee.df <- df %>% 
+  group_by(monthly_fee_bin) %>% 
+  summarize(total_count = n(),
+    total_churns = sum(Churn)) %>% 
+  mutate(churn_rate = total_churns/total_count)
+
+head(monthly.fee.df) #check results
+
+#check churn columns
+sum(monthly.fee.df$total_churns)
+sum(monthly.fee.df$total_count)
+
+#add highlight flag column
+monthly.fee.df <- monthly.fee.df %>% 
+mutate(highlight_flag =
+    ifelse(churn_rate > churn_rate_overall, 1, 0))
+
+#check results
+head(monthly.fee.df$highlight_flag)
+
+#plot response rate by fee difference
+plot.fee.diff <- ggplot(data=monthly.fee.df, aes(x=reorder(monthly_fee_bin, churn_rate), y=churn_rate,
+  fill = factor(highlight_flag))) +
+  geom_bar(stat="identity") +
+  geom_hline(yintercept=churn_rate_overall, linetype="dashed", color = "black") +
+  theme(axis.text.x = element_text(angle = 90)) +
+  coord_flip() +
+    scale_fill_manual(values = c('#595959', '#e41a1c')) +
+  labs(x = ' ', y = 'Churn Rate', title = str_c("Churn rate by monthly fee")) +
+  theme(legend.position = "none")
+
+plot.fee.diff
+
+```
+
+
+
+```{r Churn rate by InternetService}
+
+
+#data frame grouped by fee
+internet.df <- df %>% 
+  group_by(InternetService) %>% 
+  summarize(total_count = n(),
+    total_churns = sum(Churn)) %>% 
+  mutate(churn_rate = total_churns/total_count)
+
+head(internet.df) #check results
+
+#check churn columns
+sum(internet.df$total_churns)
+sum(internet.df$total_count)
+
+#add highlight flag column
+internet.df <- internet.df %>% 
+mutate(highlight_flag =
+    ifelse(churn_rate > churn_rate_overall, 1, 0))
+
+#check results
+head(internet.df$highlight_flag)
+
+#plot response rate by fee difference
+ggplot(data=internet.df, aes(x=reorder(InternetService, churn_rate), y=churn_rate,
+  fill = factor(highlight_flag))) +
+  geom_bar(stat="identity") +
+  geom_hline(yintercept=churn_rate_overall, linetype="dashed", color = "black") +
+  theme(axis.text.x = element_text(angle = 90)) +
+  coord_flip() +
+    scale_fill_manual(values = c('#595959', '#e41a1c')) +
+  labs(x = ' ', y = 'Churn Rate', title = str_c("Churn rate by internet service")) +
+  theme(legend.position = "none")
+```
+
+
+
+```{r Churn rate by Payment Method}
+
+#data frame grouped by payment method
+pymt.method.df <- df %>% 
+  group_by(PaymentMethod) %>% 
+  summarize(total_count = n(),
+    total_churns = sum(Churn)) %>% 
+  mutate(churn_rate = total_churns/total_count)
+
+head(pymt.method.df) #check results
+
+#check churn columns
+sum(pymt.method.df$total_churns)
+sum(pymt.method.df$total_count)
+
+#add highlight flag column
+pymt.method.df <- pymt.method.df %>% 
+mutate(highlight_flag =
+    ifelse(churn_rate > churn_rate_overall, 1, 0))
+
+#check results
+head(pymt.method.df$highlight_flag)
+
+#plot response rate by fee difference
+ggplot(data=pymt.method.df, aes(x=reorder(PaymentMethod, churn_rate), y=churn_rate,
+  fill = factor(highlight_flag))) +
+  geom_bar(stat="identity") +
+  geom_hline(yintercept=churn_rate_overall, linetype="dashed", color = "black") +
+  theme(axis.text.x = element_text(angle = 90)) +
+  coord_flip() +
+    scale_fill_manual(values = c('#595959', '#e41a1c')) +
+  labs(x = ' ', y = 'Churn Rate', title = str_c("Churn rate by payment method")) +
+  theme(legend.position = "none")
+
+```
+
+We have uncovered some insights so far:
+
+
+Now we have to decide whether we should do some data modeling.
+
+## Step 5A: Data pre-proessing
+
+
+
+```{r Get data ready for modeling}
+#let's use a fresh dataset
+df_raw <- read.csv("~/R_Programming/HI Bootcamp/Telco-Customer-Churn.csv")
+
+#str(df_raw) #check results
+
+#Remove rows with missing observations
+df_raw <- df_raw[complete.cases(df_raw),] 
+
+#get rid of customerID column - we don't need it for modeling
+#let's just keep the variables we need
+df_premodel <- df_raw %>% 
+  select(gender, SeniorCitizen, Partner, Dependents, tenure, PhoneService, MultipleLines, InternetService, OnlineSecurity, OnlineBackup, DeviceProtection, TechSupport, StreamingTV, StreamingMovies,Contract,PaperlessBilling, PaymentMethod, MonthlyCharges, TotalCharges, Churn)
+
+
+#merge unnecessary levels (no internet) and recode variables to dummy variable
+df_dummy <- df_premodel %>% 
+    mutate(gender = ifelse(gender == "Female", 1, 0),
+           Partner = ifelse(Partner == "Yes", 1, 0),
+           Dependents = ifelse(Dependents == "Yes", 1, 0),
+           PhoneService = ifelse(PhoneService == "Yes", 1, 0),
+           MultipleLines = ifelse(MultipleLines == "Yes", 1, 0),
+          OnlineSecurity = ifelse(OnlineSecurity  == "Yes", 1, 0),
+          OnlineBackup = ifelse(OnlineBackup  == "Yes", 1, 0),
+          DeviceProtection = ifelse(DeviceProtection  == "Yes", 1, 0),
+          TechSupport = ifelse(TechSupport  == "Yes", 1, 0),
+          StreamingTV = ifelse(StreamingTV  == "Yes", 1, 0),
+          StreamingMovies = ifelse(StreamingMovies  == "Yes", 1, 0),
+          PaperlessBilling = ifelse(PaperlessBilling  == "Yes", 1, 0),
+          Churn = ifelse(Churn == "Yes", 1, 0))
+
+#check results
+str(df_dummy)
+
+#recode numeric variables into factor variables
+df_dummy <- df_dummy %>% 
+  mutate_at(c("gender", "SeniorCitizen", "Partner", "Dependents", "PhoneService", "MultipleLines", "InternetService", "OnlineSecurity", "OnlineBackup", "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies","Contract","PaperlessBilling", "PaymentMethod", "Churn"), .funs = factor)
+
+#check results
+str(df_dummy)
+
+```
+
+
+```{r Check churn variable if needed}
+str(df_dummy$Churn) #check churn variable
+
+table(df_dummy$Churn)
+```
+
+
+
+
+
+## Part 5B: Modeling - Logistic Regression
+
+
+
+```{r Train and test data split}
+
+# Check total number of rows in our dataset before splitting
+nrow(df_dummy)
+
+#Set seed for reproducibility
+set.seed(123) 
+
+#Split the dataset into training and test sets at 70:30 ratio using caTools package
+split <- sample.split(df_dummy$Churn, SplitRatio = 0.7)
+train_data <- subset(df_dummy, split == TRUE)
+test_data <- subset(df_dummy, split == FALSE)
+
+#Check if distribution of partition data is correct for train and test set
+prop.table(table(train_data$Churn))
+prop.table(table(test_data$Churn)) 
+
+```
+
+
+```{r Logistic Regression Model 1 - Baseline Model}
+
+set.seed(1)  # set seed for reproducibility
+
+#Use glm function from glmnet package to create model
+model_01_glm <- glm(formula = Churn ~ ., 
+                             data = train_data, family = "binomial")
+ 
+#use to debug if glm function not working   
+# train_data %>%
+#   select_if(is.factor) %>%
+#   lapply(table)
+                         
+#Print the model output
+summary(model_01_glm)
+```
+
+
+
+The Odds Ratio and Probability of each x variable is calculated based on the formulae, Odds Ratio = exp(Co-efficient estimate) Probability = Odds Ratio / (1 + Odds Ratio)
+
+```{r Confidence Intervals and Coefficients Interpretation}
+
+##Individual coefficients significance and interpretation
+
+#library(coef.lmList)
+summary(model_01_glm)
+
+#prints confidence intervals
+exp(confint(model_01_glm))
+
+
+#plot coefficients on odds ratio using sjPlot package
+plot_model(model_01_glm, vline.color = "red",
+  sort.est = TRUE, show.values = TRUE)
+
+```
+
+
+```{r Check for collinearity - Variance Inflation Factor}
+#Calculate Variance Inflation factor using car package
+vif(model_01_glm)
+
+# Feature (x) variables with a VIF value above 5 indicate high degree of
+# multi-collinearity.
+```
+
+MonthlyCharges  has a very high VIF at 600+. We have some other variables e.g. InternetServiceFiber.optic, InternetServiceNo, and TotalCharges, PhoneServiceYes, with high VIFs. Normally, we would want to remove variables with high VIF as it can really mess with our model.
+
+
+```{r Logistic Regression Accuracy and Model Evaluation using Model 1}
+pred <- predict(model_01_glm, test_data, type = "response") #predict using test data
+
+#check results
+head(pred)
+
+predicted <- round(pred) #>0.5 will convert to 1
+
+#contingency table
+contingency_tab <- table(test_data$Churn, predicted)
+contingency_tab
+
+# Confusion Matrix using the caret package
+caret::confusionMatrix(contingency_tab)
+
+#Plot ROC Curve & Calculate AUC area
+library(ROCR)
+
+#ROC Curves are useful for comparing classifiers
+
+#Check data structures first or else the ROC curve won't plot
+typeof(predicted)
+typeof(test_data$Churn)
+
+
+pr <- prediction(pred, test_data$Churn)
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+
+plot(prf)
+
+#The ideal ROC curve hugs the top left corner, indicating a high
+#true positive rate and a low false positive rate.
+#True positive rate on y-axis
+#False positive rate on the x-axis
+
+#The larger the AUC, the better the classifier
+#The AUC line is insufficient to identify a best model
+#It's used in combination with qualitative examination
+#of the ROC curve
+auc <- performance(pr, measure = "auc")
+auc
+
+# AUC is 0.861989
+as.numeric(performance(pr, measure = "auc")@y.values)
+
+#Double density plot for explaining and picking thresholds of predicted churn probabilities. Perhaps better alternative than AUC or ROC curve
+ggplot(data = test_data) + geom_density(aes(x=pred, color = Churn,linetype = Churn))
+```
+AUC Interpretation
+A: Outstanding = 0.9 to 1.0
+B: Excellent/Good = 0.8 to 0.9
+C: Acceptable/Fair = 0.7 to 0.8
+D: Poor = 0.6 to 0.7
+E: No Discrimination = 0.5 to 0.6
+
+
+```{r Log Regression Model 2 without high VIF variable}
+set.seed(1)  # for reproducibility
+model_02_glm <- glm(formula = Churn ~ . -MonthlyCharges,
+                             data = train_data, family = "binomial")
+
+summary(model_02_glm)
+
+vif(model_02_glm)
+
+#plot coefficients on odds ratio
+plot_model(model_02_glm, vline.color = "red",
+  sort.est = TRUE, show.values = TRUE)
+```
+InternetService - Fiber Optic cable still increases likelihood of churn followed by paperless billing and being a senior citizen.
+
+
+```{r Logistic Regression Accuracy and Model Evaluation using Model 2}
+pred <- predict(model_02_glm, test_data, type = "response") #predict using test data
+
+#check results
+head(pred)
+
+predicted <- round(pred) #>0.5 will convert predicted values to 1
+
+#contingency table - manually done with table function
+contingency_tab <- table(test_data$Churn, predicted)
+contingency_tab
+
+# Confusion Matrix using the caret package
+caret::confusionMatrix(contingency_tab)
+
+#Plot ROC Curve & Calculate AUC area
+library(ROCR)
+
+
+#check data structures first
+typeof(predicted)
+typeof(test_data$Churn)
+
+
+pr <- prediction(pred, test_data$Churn)
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+
+plot(prf)
+
+#The ideal ROC curve hugs the top left corner, indicating a high
+#true positive rate and a low false positive rate.
+#True positive rate on y-axis
+#False positive rate on the x-axis
+
+#The larger the AUC, the better the classifier
+#The AUC line is insufficient to identify a best model
+#It's used in combination with qualitative examination
+#of the ROC curve
+auc <- performance(pr, measure = "auc")
+auc
+
+as.numeric(performance(pr, measure = "auc")@y.values)
+```
+
+
+Comparing logistic regression models 1 and 2
+-Model 1 has better accuracy than Model 2 (just slightly better), but we do care about specificity and sensitivity.
+
+Sensitivity is the proportion of our variable of interest(churn) correctly identified.
+
+Specificity is the proportion of our variable of interest(churn)
+
+Read: https://www.theanalysisfactor.com/sensitivity-and-specificity/
+
+
+## Part 5B: Modeling - Random Forest
+
+
+
+
+```{r Train a Random Forest model RF Model 1}
+# Train a Random Forest using randomForest package
+set.seed(1)  # for reproducibility
+model_01_rf <- randomForest(formula = Churn ~ ., data = train_data, importance = TRUE, na.action=na.exclude)
+                             
+# Print the model output                
+print(model_01_rf)
+```
+Model 500 trees:
+-No. of variables tried at each split: 5
+-OOB estimate of  error rate: 20%
+
+```{r Variable Importance}
+# prints variable importance
+summary(model_01_rf)
+
+
+varImpPlot(model_01_rf, main="Variable Importance")
+```
+
+```{r RF Model 2 - Without Tenure}
+# Train a Random Forest
+set.seed(1)  # for reproducibility
+model_02_rf <- randomForest(formula = Churn ~ . -tenure,
+                             data = train_data, importance = TRUE)
+                             
+# Print the model output
+print(model_02_rf)
+
+varImpPlot(model_02_rf, main="Variable Importance without tenure")
+```
+
+Type of random forest: classification
+                     Number of trees: 500
+No. of variables tried at each split: 4
+
+OOB estimate of  error rate: 21.51%
+Confusion matrix:
+     0   1 class.error
+0 3621 499   0.1211165
+1  829 677   0.5504648
+
+our oob error rate increased to 21.51% from 21.3% -
+let's tune the 1st model - model_01_rf
+
+```{r Evaluate out-of-bag error}
+# Grab OOB error matrix & take a look
+err <- model_01_rf$err.rate
+head(err)
+
+# Look at final OOB error rate (last row in err matrix)
+oob_err <- err[nrow(err), "OOB"]
+print(oob_err)
+
+# Plot the model trained
+plot(model_01_rf)
+
+# Add a legend since it doesn't have one by default
+legend(x = "right", 
+       legend = colnames(err),
+       fill = 1:ncol(err))
+```
+
+
+
+
+```{r Evaluate model performance on a test set }
+# Generate predicted classes using the model object
+class_prediction <- predict(object = model_01_rf,   # model object 
+                            newdata = test_data,  # test dataset
+                            type = "class") # return classification labels
+                            
+# Calculate the confusion matrix for the test set
+cm <- caret::confusionMatrix(data = class_prediction,#predicted classes
+                      reference = test_data$Churn)  # actual classes
+print(cm)
+
+# Compare test set accuracy to OOB accuracy
+paste0("Test Accuracy: ", cm$overall[1])
+paste0("OOB Accuracy: ", 1 - oob_err)
+```
+
+Compare test set accuracy to OOB accuracy
+
+[1] "Test Accuracy: 0.809388335704125"
+
+[1] "OOB Accuracy: 0.796836118023462"
+
+
+
+```{r Evaluate test set AUC - Area under the curve for first RF model}
+
+# Generate predictions on the test set
+pred <-predict(object = model_01_rf,
+            newdata = test_data,
+            type = "prob") 
+
+# Uncomment to take a look at the pred format - `pred` object is a matrix
+#head(pred)
+                
+# Compute the AUC (`actual` must be a binary 1/0 numeric vector)
+round(auc(actual = ifelse(test_data$Churn == "1", 1, 0),
+    predicted = pred[,"1"]) ,2)
+```
+
+AUC is good to excellent
+
+
+
+
+CAUTION: Random forest models are computationally heavy to run on your computer especially the parameter tuning as the model needs to iterate through all possible values in the hyper grid. This could take many hours to run and if your dataset is large, could crash your computer!
+
+```{r Tuning Random Forest - hyper grid - mtry nodesize sampsize, eval=FALSE, warning=FALSE, include=FALSE}
+
+# Establish a list of possible values for mtry, nodesize and sampsize
+mtry <- seq(4, ncol(train_data) * 0.8, 2)
+nodesize <- seq(3, 8, 2)
+sampsize <- nrow(train_data) * c(0.7, 0.8)
+
+# Create a data frame containing all combinations 
+hyper_grid <- expand.grid(mtry = mtry, nodesize = nodesize, sampsize = sampsize)
+
+# Create an empty vector to store OOB error values
+oob_err <- c()
+
+# Write a loop over the rows of hyper_grid to train the grid of models
+for (i in 1:nrow(hyper_grid)) {
+
+# Train a Random Forest model
+    model <- randomForest(formula = Churn ~ ., 
+                          data = train_data,
+                          mtry = hyper_grid$mtry[i],# most important tuning param
+                          nodesize = hyper_grid$nodesize[i],
+                          sampsize = hyper_grid$sampsize[i])
+                          
+# Store OOB error for the model                      
+    oob_err[i] <- model$err.rate[nrow(model$err.rate), "OOB"]
+}
+
+# Identify optimal set of hyperparmeters based on OOB error
+opt_i <- which.min(oob_err)
+print(hyper_grid[opt_i,])
+
+```
+Optimal model
+
+Mtry = 4
+nodesize = 7
+sampsize = 3445.4	
+
+
+
+```{r RF Model 3 - The Tuned Model}
+# Train a Random Forest
+set.seed(1)  # for reproducibility
+model_03_rf_final <- randomForest(formula = Churn ~ ., 
+                                  mtry = 4,
+                                  nodesize = 7,
+                                  sampsize = 3445.4,
+                             data = train_data, importance = TRUE, keep.forest=TRUE)
+                             
+# Print the model output
+print(model_03_rf_final)
+
+#variable importance
+importance(model_03_rf_final)
+
+#variable importance plot
+varImpPlot(model_03_rf_final, main="Variable importance on the tuned model")
+```
+
+```{r Partial dependence plots for the most important variables, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+# Let’s check partial dependence plots for a few variables:
+
+op <- par(mfrow=c(2, 2))
+
+partialPlot(model_03_rf_final, train_data, tenure, 1)
+
+partialPlot(model_03_rf_final, train_data, TotalCharges, 1)
+
+partialPlot(model_03_rf_final, train_data, Contract, 1)
+
+partialPlot(model_03_rf_final, train_data, MonthlyCharges, 1)
+
+par(op)
+```
+
+
+
+```{r Evaluate test set AUC - Area under the curve for best tuned model - RF3}
+# Generate predictions on the test set
+pred <-predict(object = model_03_rf_final,
+            newdata = test_data,
+            type = "prob") 
+
+round(auc(actual = ifelse(test_data$Churn == "1", 1, 0),
+    predicted = pred[,"1"]) ,2)
+```
+
+
+```{r ROC Curve for RF Model - Best Model}
+require(pROC)
+rf.roc<-roc(train_data$Churn,model_03_rf_final$votes[,2])
+plot(rf.roc)
+auc(rf.roc)
+```
+
+
+
+
+```{r Decision Tree Model}
+
+# Train the model (to predict 'Churn') using rpart package
+tree_mod_01 <- rpart(formula = Churn ~., 
+                      data = train_data,
+                      method = "class")
+
+# Look at the model output                  
+print(tree_mod_01)
+
+
+# Display the results using rpart.plot package
+rpart.plot(x = tree_mod_01, yesno = 2, type = 0, extra = 0)
+
+rpart.plot(tree_mod_01,
+yesno = 2,
+extra = 104, # show fitted class, probs, percentages
+box.palette = "GnBu", # color scheme
+branch.lty = 3, # 1= solid, 3 = dotted branch lines
+shadow.col = "gray", # shadows under the node boxes
+nn = TRUE, 
+main = "Classification tree on our churn data")
+```
+
+
+
+```{r Compare tree models with a different splitting criterion}
+# Train a gini-based model
+tree_mod_02<- rpart(formula = Churn ~., 
+                      data = train_data_tree,
+                       method = "class",
+                       parms = list(split = "gini"))
+
+# Display the results
+rpart.plot(x = tree_mod_02, yesno = 2, type = 0, extra = 0)
+
+# Train an information-based model
+tree_mod_03<- rpart(formula = Churn ~., 
+                      data = train_data_tree, 
+                       method = "class",
+                       parms = list(split = "information"))
+
+# Display the results
+rpart.plot(x = tree_mod_03, yesno = 2, type = 5, extra = 6)
+
+# Generate predictions on the test set using the gini model
+pred1 <- predict(object = tree_mod_02, 
+             newdata = test_data_tree,
+             type = "class")    
+
+# Generate predictions on the test set using the information model
+pred2 <- predict(object = tree_mod_03, 
+             newdata = test_data_tree,
+             type = "class")
+
+# Compare classification error - using ModelMetrics library
+ce(actual = test_data$Churn, 
+   predicted = pred1)
+ce(actual = test_data$Churn, 
+   predicted = pred2)  
+
+```
+
+## Part 6: Summary of Insights and hypotheses generated and testing them
+
+
+What insights have we discovered and can confidently report to our stakeholders?
+
+1.Fiber optic service is a pain point for customers, but why? Difficult to set up. Quality concerns, Can’t stream Netflix, etc.
+2. Contract type is a no-brainer. If you lock customers into a contract, they can’t churn.
+
+
+
+```{r What is the economic impact of such a high churn rate for fiber optic product?}
+
+df %>% 
+  filter(Churn == "Yes" & InternetService == "Fiber optic") %>% 
+  summarize(lost_revenue = sum(TotalCharges))
+
+# If we plot lost revenue (churned customers) by internet service, this could help create a sense of urgency for your business stakeholders.
+
+```
+
+
+Now, you have a good starting point to present your findings & insights to stakeholders, but this is only the beginning. Currently, you only have a strong hypotheses so now you need to validate and test what you have uncovered. You may need to do more research or data to do this as you may need to uncover the root causes.

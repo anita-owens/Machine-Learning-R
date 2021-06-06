@@ -41,18 +41,12 @@ seg_summ_function <- function(data, groups) {
 
 ######### Import Data ###################
 
-getwd() #check working directory
+#import csv file
+fb_data <- read.csv("~/Documents/GitHub/Machine-Learning-R/Machine-Learning-R/datasets/dataset_Facebook.csv", sep = ';')
 
-#change wd
-setwd("/Users/anitaowens/R_Programming/UCI Machine Learning Repo/Facebook Metrics Data Set") #change working directory
 
-getwd() #check working directory
-
-#import data
-fb_data <- read.csv("/Users/anitaowens/R_Programming/UCI Machine Learning Repo/Facebook Metrics Data Set/dataset_Facebook.csv", sep = ';')
-head(fb_data,2)
-glimpse(fb_data)
-
+#check results of data import
+str(fb_data)
 
 ########### Check Data #################
 
@@ -233,7 +227,6 @@ CrossTable(fb_data$Paid, fb_data$Category, digits=2, prop.c = TRUE,
   prop.r = TRUE, prop.t = FALSE, chisq = FALSE, format = "SAS", expected = FALSE)
 
 ############Exploring Associations between continuous variables with scatterplots####
-
 
 ggplot(data = fb_data, aes(x = reach))+
       geom_histogram(fill = "lightblue", binwidth = 25, colour = "black") +

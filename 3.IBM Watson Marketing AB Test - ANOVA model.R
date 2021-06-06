@@ -7,6 +7,7 @@
 library(multcomp)
 library(tidyverse)
 library(cowplot)
+library(VIM)
 
 ###### Data Import & Data Exploration #############
 
@@ -208,7 +209,7 @@ leveneTest(SalesInThousands ~ Promotion, data = df)
 #So we are good here. Promotion 2 is still not significant.
 
 
-#3. Shapiro-Wilk (Has better power than K-S test)
+#3. Shapiro-Wilk (Has better power than Kolmogorov-Smirnoff (K-S) test)
 
 # Extract the residuals
 aov_residuals <- residuals(object = a1)
@@ -234,7 +235,7 @@ pairwise.wilcox.test(df$SalesInThousands, df$Promotion,
 #most likely due to having a very large sample size to make
 #the group comparisons. 
 
-######### Summary: What should you tell the marketing & sales team? ############
+######### Final Summary: What should you tell the marketing & sales team? ############
 
 #Let's run again with just promotion 1 & 3 to
 #see if we can get a significant result. The test

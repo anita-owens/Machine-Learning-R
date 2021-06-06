@@ -44,13 +44,13 @@ library(lubridate)
 
 getwd() #check working directory
 
-#change wd
-setwd("/Users/anitaowens/R_Programming/UCI Machine Learning Repo/Bank Marketing Data") #change working directory
+#change working directory if needed
+#setwd("/Users/anitaowens/R_Programming/UCI Machine Learning Repo/Bank Marketing Data") #change working directory
 
-getwd() #check working directory
+getwd() #check results
 
 #Import the full dataset
-bank_data <- read.csv("bank-full.csv", sep = ';')
+bank_data <- read.csv("~/Documents/GitHub/Machine-Learning-R/Machine-Learning-R/datasets/bank-full.csv", sep = ';')
 
 #full data for comparison
 #df.orig <- read.csv("bank-additional-full.csv", sep = ';')

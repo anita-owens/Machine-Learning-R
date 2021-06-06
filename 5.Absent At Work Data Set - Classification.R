@@ -73,17 +73,11 @@ library(gmodels)
 
 ######### Import Data ###################
 
-getwd() #check working directory
+#import csv file
+df<- read.csv("~/Documents/GitHub/Machine-Learning-R/Machine-Learning-R/datasets/Absenteeism_at_work.csv", sep = ';')
 
-#change wd
-setwd("/Users/anitaowens/R_Programming/UCI Machine Learning Repo") #change working directory
-
-getwd() #check working directory
-
-
-df<- read.csv("Absenteeism_at_work_AAA/Absenteeism_at_work.csv", sep = ';')
-head(df,2)
-glimpse(df)
+#check results
+str(df)
 
 ########### Check Data #################
 
