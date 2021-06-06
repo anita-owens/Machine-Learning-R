@@ -1,6 +1,6 @@
-# Machine-Learning #Stastiscal-Analysis
+# Machine-Learning
  
-This repo contains projects related to marketing analytics and business problems using the R Programming language.
+This repo contains projects related to marketing and business analytics problems using the R Programming language.
 
 PROJECT 1: MARKETING CAMPAIGN OPTIMIZATION
 
@@ -29,6 +29,13 @@ PROJECT 7: FACEBOOK PERFORMANCE
 
 The project task is to analyze posts published to the Facebook page of a renowned cosmetics brand. The goal is to identify which posts led to the most customer engagement.
 
-PROJECT 8: CUSTOMER CHURN MODEL
+PROJECT 8: CUSTOMER CHURN
 
-My personal favorite and a common business task is to identify what factors lead customers to churn and how can we use this data to improve customer retention.
+My personal favorite and a common business task is to identify what factors lead customers to churn and how can we use this data to improve customer retention. This project identified core insights for business stakeholders. For example:
+
+     1.Fiber optic service is a pain point for customers, but why? Difficult to set up. Quality concerns, Can’t stream Netflix, etc.
+     2. Contract type is a no-brainer. If you lock customers into a contract, they can’t churn.
+     
+The analysis revealed $2 million USD in lost revenue due to churned customers.
+
+
