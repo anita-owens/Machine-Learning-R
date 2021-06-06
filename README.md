@@ -38,4 +38,8 @@ My personal favorite and a common business task is to identify what factors lead
      
 The analysis revealed $2 million USD in lost revenue due to churned customers.
 
+![$2 4 million in lost revenue due to Fiber Optic internet service](https://user-images.githubusercontent.com/13710429/120935138-9c883900-c701-11eb-99f8-ac6c15bdd175.png)
+
+
+
 
