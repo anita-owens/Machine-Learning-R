@@ -16,21 +16,21 @@ PROJECT 3: A/B TEST ANALYSIS
 
 The goal of project three is to analyze the results of an experiment whereby a chain of department stores that ran 3 promotions. The marketing team wants to know which promotion was the most effective in generating sales. The deliverable is to inform the marketing team on the results of the impact of the experiment.
 
-![Rplot](https://user-images.githubusercontent.com/13710429/120935357-b1b19780-c702-11eb-8f8a-3fbc7069a456.png)
-
-
 
 PROJECT 4: PREDICT ONLINE SHOPPING BEHAVIOR
 
 The goal is to identify what characteristics makes a converting customer? What online shopping behaviors exist so we can improve marketing (targeting and customer acquisition) and product (how can we improve our offerings or the customer experience?)
 
+
 PROJECT 5: PREDICT WHAT FACTORS DRIVE ABSENTEEISM AT WORK
 
 PROJECT 6: CALCULATE CUSTOMER LIFETIME VALUE
 
+
 PROJECT 7: FACEBOOK PERFORMANCE
 
 The project task is to analyze posts published to the Facebook page of a renowned cosmetics brand. The goal is to identify which posts led to the most customer engagement.
+
 
 PROJECT 8: CUSTOMER CHURN
 
@@ -42,6 +42,7 @@ My personal favorite and a common business task is to identify what factors lead
 The analysis revealed $2 million USD in lost revenue due to churned customers.
 
 ![$2 4 million in lost revenue due to Fiber Optic internet service](https://user-images.githubusercontent.com/13710429/120935138-9c883900-c701-11eb-99f8-ac6c15bdd175.png)
+
 
 
 
