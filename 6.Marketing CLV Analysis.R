@@ -6,7 +6,8 @@
 # customers. You can analyze all relevant customer data and develop focused
 # customer retention programs.
 #
-# Inspiration Understand customer demographics and buying behavior. Use
+# Inspiration: 
+# Understand customer demographics and buying behavior. Use
 # predictive analytics to analyze the most profitable customers and how they
 # interact. Take targeted actions to increase profitable customer response,
 # retention, and growth.
@@ -21,6 +22,7 @@ library(tidyverse)
 library(cowplot)
 library(VIM)
 library(ggcorrplot)
+library(corrplot)
 library(car)
 
 ###### Data Import #############
@@ -141,7 +143,7 @@ p4 <- ggplot(data = df, aes(x = day))+
 powerTransform(engaged ~ ., data = df)
 
 #QQ Plots for numeric variables
-#qqPlot(df$CLV) # not normal
+qqPlot(df$CLV) # not normal
 
 #qqPlot(df$Income)
 
@@ -161,6 +163,13 @@ df %>%
   select_if(is.numeric) %>% 
   cor() %>% 
     corrplot(type = "upper", insig = "blank", diag = FALSE, addCoef.col = "grey")
+
+#Correlation matrix reveals a strong positive correlation between monthly
+#premium and total claims amount.
+#A medium correlation between monthly premium and CLV
+#A negative correlation between income and total claims amount.
+#A slightly positive correlation between total claims amount and CLV. 
+#No other correlations that are important.
 
 # more informative scatterplot matrix
 library(psych)
@@ -185,25 +194,3 @@ model_01
 # see more detail about the estimated beta coefficients
 summary(model_01)
 
-
-# making predictions with the regression model
-insurance$pred <- predict(ins_model02, insurance)
-cor(insurance$pred, insurance$expenses)
-
-plot(insurance$pred, insurance$expenses)
-abline(a = 0, b = 1, col = "red", lwd = 3, lty = 2)
-
-predict(ins_model02,
-        data.frame(age = 30, age2 = 30^2, children = 2,
-                   bmi = 30, sex = "male", bmi30 = 1,
-                   smoker = "no", region = "northeast"))
-
-predict(ins_model02,
-        data.frame(age = 30, age2 = 30^2, children = 2,
-                   bmi = 30, sex = "female", bmi30 = 1,
-                   smoker = "no", region = "northeast"))
-
-predict(ins_model02,
-        data.frame(age = 30, age2 = 30^2, children = 0,
-                   bmi = 30, sex = "female", bmi30 = 1,
-                   smoker = "no", region = "northeast"))
