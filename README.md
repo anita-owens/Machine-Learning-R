@@ -12,7 +12,7 @@ PROJECT 2: MARKETING CAMPAIGN OPTIMIZATION - What do customers want?
 We have a dataset of subscribers who subscribed to a magazine or not. Can we predict which customers are more likely to subscibe? The goal of project two is to determine which customers are most likely to respond positively to our offer.
 
 
-PROJECT 3: A/B TEST ANALYSIS
+PROJECT 3: A/B TEST ANALYSIS - Was our promotion experiment successful?
 
 The goal of project three is to analyze the results of an experiment. A chain of department stores that ran 3 promotions in different markets. The marketing team wants to know which promotion was the most effective in generating sales. The deliverable is to inform the marketing team on the results of the impact of the experiment.
 
@@ -27,7 +27,7 @@ PROJECT 5: PREDICT WHAT FACTORS DRIVE ABSENTEEISM AT WORK
 PROJECT 6: CALCULATE CUSTOMER LIFETIME VALUE
 
 
-PROJECT 7: FACEBOOK PERFORMANCE
+PROJECT 7: FACEBOOK PERFORMANCE - How do we engage with potential customers on Facebook?
 
 The project task is to analyze posts published to the Facebook page of a renowned cosmetics brand. The goal is to identify which posts led to the most customer engagement. Here, I use multiple cluster algorithms to gather insights into post performance. The results of the modeling indicates that posts with photos offered the best ROI in terms of reach. It's an unpaid segment and indicates that posting photos goes a long way in engaging users with our Facebok page. Another important insight is posting on the right day of the week to optimize engagement goals.
 
