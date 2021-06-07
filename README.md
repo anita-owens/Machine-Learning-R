@@ -29,7 +29,7 @@ PROJECT 6: CALCULATE CUSTOMER LIFETIME VALUE
 
 PROJECT 7: FACEBOOK PERFORMANCE
 
-The project task is to analyze posts published to the Facebook page of a renowned cosmetics brand. The goal is to identify which posts led to the most customer engagement.
+The project task is to analyze posts published to the Facebook page of a renowned cosmetics brand. The goal is to identify which posts led to the most customer engagement. Here, I use multiple cluster algorithms to gather insights into post performance. The results of the modeling indicates that posts with photos offered the best ROI in terms of reach. It's an unpaid segment and indicates that posting photos goes a long way in engaging users with our Facebok page. Another important insight is posting on the right day of the week to optimize engagement goals.
 
 
 PROJECT 8: CUSTOMER CHURN
