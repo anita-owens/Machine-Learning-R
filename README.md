@@ -31,7 +31,7 @@ PROJECT 6: CUSTOMER CHURN - Why do customers churn and what can we do about it?
 
 My personal favorite and a common business task is to identify what factors lead customers to churn and how can we use this data to improve customer retention. This project identified core insights for business stakeholders. For example:
 
-     1.Most significant factor related to churn is one of our product key products. Fiber optice service is a pain point for customers, but why? Difficult to set up? Quality concerns? Can’t stream Netflix? etc. Data suggests there is a significant problem with the service.
+     1.Most significant factor related to churn is one of our key products, those who have fiber optic service. Fiber optice service is a pain point for customers, but why? Difficult to set up? Quality concerns? Can’t stream Netflix? etc. Data suggests there is a significant problem with the service.
      2.Contract type is 2nd most significant factor leading to churn. This is a no-brainer. If you lock customers into a contract, they can’t churn.
      
 The analysis revealed $2 million USD in lost revenue due to churned customers.
