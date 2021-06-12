@@ -6,24 +6,24 @@ PROJECT 1: MARKETING CAMPAIGN OPTIMIZATION - Can we identify the right customers
 
 The goal of the first project is to improve campaign marketing response rate for the bank.  Marketing department needs to understand what is important. How can we allocate resources to those customers who are more likely to respond. This is a classic binary classification problem. We have customers who converted or did not convert. With this project I predict marketing response rates through logistic regression and decision trees. With the output of this data, marketing gets a profile of customers who are similar to those who successfully converted from past marketing campaigns. Here is the profile I would send to marketing.
 
-  Marketing should contact customers with these characteristics:
-    - marital status - single
-    - education -  tertiary
-    - had responded to a previous campaign and it was a positive outcome
-    - has account balance
-    - is retired or a student
+    Marketing should contact customers with these characteristics:
+      1. marital status - single
+      2. education -  tertiary
+      3. had responded to a previous campaign and it was a positive outcome
+      4. has account balance
+      5. is retired or a student
 
-  Marketing should not contact customers with these characteristics
-    - has a personal loan
-    - has mortgage loan
-
-
-  KEY INSIGHT: The bank should limit the number of contacts it has with  a customer. What's most likely                      happening is that customers may ignore communication from the bank if its gets too many.
+    Marketing should not contact customers with these characteristics
+      1. has a personal loan
+      2. has mortgage loan
+      
+      
+      KEY INSIGHT: The bank should limit the number of contacts it has with  a customer. What's most likely                      happening is that customers may ignore communication from the bank if its gets too many.
 
 
 PROJECT 2: MARKETING CAMPAIGN OPTIMIZATION - What do customers want?
 
-We have a dataset of subscribers who subscribed to a magazine or not. Can we predict which customers are more likely to subscibe? The goal of project two is to determine which customers are most likely to respond positively to our offer.
+We have a dataset of subscribers who subscribed to a magazine or not. Can we predict which customers are more likely to subscribe? The goal of project two is to determine which customers are most likely to respond positively to our offer. This is a simple dataset with few variables and is a good dataset to practice modeling.
 
 
 PROJECT 3: A/B TEST ANALYSIS - Was our promotion experiment successful?
@@ -54,21 +54,23 @@ PROJECT 5: FACEBOOK PERFORMANCE - How do we engage with potential customers on F
 
 The project task is to analyze posts published to the Facebook page of a renowned cosmetics brand. The goal is to identify which posts led to the most customer engagement. Here, I use multiple cluster algorithms to gather insights into post performance.
 
-  The results of the data analysis and modeling indicates that:
-    1.  Photos: Posts with photos offered the best ROI in terms of reach. It's an unpaid segment and indicates that posting photos goes a long way in engaging users with our Facebook page.
-    2. Day of Week: Another important insight is posting on the right day of the week to optimize engagement goals.
+    The results of the data analysis and modeling indicates that:
+      1.  Photos: Posts with photos offered the best ROI in terms of reach. It's an unpaid segment and indicates that posting photos goes a long way in engaging users with our Facebook page.
+      2. Day of Week: Another important insight is posting on the right day of the week to optimize engagement goals.
 
 
 PROJECT 6: CUSTOMER CHURN - Why do customers churn and what can we do about it?
 
 My personal favorite and a common business task is to identify what factors lead customers to churn and how can we use this data to improve customer retention. This project identified core insights for business stakeholders.
 
-  What causes churn?
-       1. Most significant factor related to churn is one of our product key products.
-        - Fiber optic service is a pain point for customers, but why? Difficult to set up? Quality concerns?           Can’t stream Netflix? etc. Data suggests there is a significant problem with the service.
-       2. Contract type is 2nd most significant factor leading to churn. This is a no-brainer. If you lock             customers into a contract, they can’t churn.
+    What causes churn?
+         1. Most significant factor related to churn is one of our product key products.
+          - Fiber optic service is a pain point for customers, but why? Difficult to set up? Quality
+            concerns? Can’t stream Netflix? etc. Data suggests there is a significant problem with the                   service.
+         2. Contract type is 2nd most significant factor leading to churn. 
+          - This is a no-brainer. If you lock customers into a contract, they can’t churn.
 
-  Economic impact of a bad product:     
-  - The analysis revealed $2 million USD in lost revenue due to churned customers.
+    Economic impact of a bad product:     
+      - The analysis revealed $2 million USD in lost revenue due to churned customers.
 
 ![$2 4 million in lost revenue due to Fiber Optic internet service](https://user-images.githubusercontent.com/13710429/120935138-9c883900-c701-11eb-99f8-ac6c15bdd175.png)
