@@ -3,12 +3,11 @@
 # The classification goal is to predict if the client will subscribe (yes/no) a
 # term deposit (variable y).
 
-# In this article, we will see how we could harness the power of machine
-# learning to y the campaigns towards the right set of customers, thereby
-# increasing conversion propensity. We will be using past data available on the
+# In this analysis we will be using past data available on the
 # demography, bank details, and transaction patterns of customers who have
 # responded and not responded to a campaign, as training data to
-# predict the probability if a customer will respond to the campaign.
+# predict the probability if a customer will respond to the campaign. With this information we can
+# inform marketing on how to more effectively target customers with marketing.
 
 
 ######Load libraries###########
@@ -26,19 +25,8 @@ library(RColorBrewer)
 library(tidyverse)
 library(lubridate)
 
-# Customer response prediction using Logistic Regression
-
-# The classification goal is to predict if the client will subscribe (yes/no) a
-# term deposit (variable y).
-
-# In this article, we will see how we could harness the power of machine
-# learning to y the campaigns towards the right set of customers, thereby
-# increasing conversion propensity. We will be using past data available on the
-# demography, bank details, and transaction patterns of customers who have
-# responded and not responded to a campaign, as training data to
-# predict the probability if a customer will respond to the campaign.
-
-#browseURL("https://archive.ics.uci.edu/ml/datasets/Bank+Marketing")
+#All datasets available via UCI repository
+browseURL("https://archive.ics.uci.edu/ml/datasets/Bank+Marketing")
 
 ##########Import Data###################
 
