@@ -1,5 +1,5 @@
 # Machine-Learning
- 
+
 This repo contains projects related to marketing and business analytics problems using the R Programming language.
 
 PROJECT 1: MARKETING CAMPAIGN OPTIMIZATION - Can we identify the right customers to target?
@@ -12,7 +12,7 @@ The goal of the first project is to improve campaign marketing response rate for
     - had responded to a previous campaign and it was a positive outcome
     - has account balance
     - is retired or a student
-  
+
   Marketing should not contact customers with these characteristics
     - has a personal loan
     - has mortgage loan
@@ -42,7 +42,7 @@ The goal is to identify what characteristics makes a converting customer? What o
        - Visitor type is important (returnings and new visitor segments)
        - The different pages a user visits is important and where they exit from the site
        - And whether they visited a product related page
-      
+
       What's not important?
        - Special day doesn't appear to make much of a difference
        - We presumed weekend makes a difference, but it doesn't.
@@ -52,10 +52,10 @@ The goal is to identify what characteristics makes a converting customer? What o
 
 PROJECT 5: FACEBOOK PERFORMANCE - How do we engage with potential customers on Facebook?
 
-The project task is to analyze posts published to the Facebook page of a renowned cosmetics brand. The goal is to identify which posts led to the most customer engagement. Here, I use multiple cluster algorithms to gather insights into post performance. 
+The project task is to analyze posts published to the Facebook page of a renowned cosmetics brand. The goal is to identify which posts led to the most customer engagement. Here, I use multiple cluster algorithms to gather insights into post performance.
 
   The results of the data analysis and modeling indicates that:
-    1.  Photos: Posts with photos offered the best ROI in terms of reach. It's an unpaid segment and indicates that posting photos goes a long way in engaging users with our Facebook page. 
+    1.  Photos: Posts with photos offered the best ROI in terms of reach. It's an unpaid segment and indicates that posting photos goes a long way in engaging users with our Facebook page.
     2. Day of Week: Another important insight is posting on the right day of the week to optimize engagement goals.
 
 
@@ -64,7 +64,7 @@ PROJECT 6: CUSTOMER CHURN - Why do customers churn and what can we do about it?
 My personal favorite and a common business task is to identify what factors lead customers to churn and how can we use this data to improve customer retention. This project identified core insights for business stakeholders.
 
   What causes churn?
-       1. Most significant factor related to churn is one of our product key products. 
+       1. Most significant factor related to churn is one of our product key products.
         - Fiber optic service is a pain point for customers, but why? Difficult to set up? Quality concerns?           Can’t stream Netflix? etc. Data suggests there is a significant problem with the service.
        2. Contract type is 2nd most significant factor leading to churn. This is a no-brainer. If you lock             customers into a contract, they can’t churn.
 
@@ -72,8 +72,3 @@ My personal favorite and a common business task is to identify what factors lead
   - The analysis revealed $2 million USD in lost revenue due to churned customers.
 
 ![$2 4 million in lost revenue due to Fiber Optic internet service](https://user-images.githubusercontent.com/13710429/120935138-9c883900-c701-11eb-99f8-ac6c15bdd175.png)
-
-
-
-
-
