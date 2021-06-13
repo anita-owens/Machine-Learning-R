@@ -271,4 +271,4 @@ Having a proper control group for comparison to be able
 to calculate the impact of the promotions
 
 It appeared in group 1 there were some stores that were slightly
-younger than those in Group 3 it may not have made a difference but we should try to control for this.
+younger than those in Group 3 it may not have made a difference but we should try to control for this in the experimental design phase.

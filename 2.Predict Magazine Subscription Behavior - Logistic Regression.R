@@ -388,7 +388,7 @@ sum(diag(contingency_tab))/sum(contingency_tab) *100
 # Confusion Matrix using the caret package
 caret::confusionMatrix(contingency_tab)
 
-#########Summary of Signficant Variables from Log Regression Model#################
+#########Summary of Significant Variables from Log Regression Model#################
 
 # Negative correlation
 # -age
