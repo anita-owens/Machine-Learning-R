@@ -18,7 +18,7 @@ The goal of the first project is to improve campaign marketing response rate for
       2. has mortgage loan
       
       
-      KEY INSIGHT: The bank should limit the number of contacts it has with  a customer. What's most likely                      happening is that customers may ignore communication from the bank if its gets too many.
+      KEY INSIGHT: The bank should limit the number of contacts it has with  a customer. What's most likely                      happening is that customers may ignore communication from the bank if a customers gets too many.
 
 
 PROJECT 2: MARKETING CAMPAIGN OPTIMIZATION - What do customers want?
