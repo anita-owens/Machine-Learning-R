@@ -1,6 +1,6 @@
 # Machine-Learning
 
-This repo contains projects related to marketing and business analytics problems using the R Programming language.
+This repo contains projects related to marketing and business analytics problems using the R Programming language. Machine Learning can significantly improve marketing performance.
 
 PROJECT 1: MARKETING CAMPAIGN OPTIMIZATION - Can we identify the right customers to target?
 
@@ -27,7 +27,7 @@ Here is the profile I would send to marketing.
 
 PROJECT 2: MARKETING CAMPAIGN OPTIMIZATION - What do customers want?
 
-We have a dataset of subscribers who subscribed to a magazine or not. Can we predict which customers are more likely to subscribe? The goal is to determine which customers are most likely to respond positively to our offer. This is a simple dataset with few variables and is a good dataset to practice regression modeling.
+We have a dataset of subscribers who subscribed to a magazine or not. Can we predict which customers are more likely to subscribe? The goal is to determine which customers are most likely to respond positively to our offer. This is a simple dataset with few variables and is a good dataset to practice regression modeling. By using machine learning to identify quality customer characteristics, we can save costs and improve customer acquisition with increased ROI.
 
     Recommendations to marketing:
     
@@ -53,7 +53,7 @@ PROJECT 4: PREDICT ONLINE SHOPPING BEHAVIOR - Who is most likely to convert?
 The goal is to identify what characteristics makes a converting customer? What online shopping behaviors exist so we can improve marketing (targeting and customer acquisition) and product (how can we improve our offerings or the customer experience?)
 
       This analysis suggests that:
-       - Visitor type is important (returnings and new visitor segments)
+       - Visitor type is important (returning and new visitor segments)
        - The different pages a user visits is important and where they exit from the site
        - And whether they visited a product related page
 
@@ -61,7 +61,7 @@ The goal is to identify what characteristics makes a converting customer? What o
        - Special day doesn't appear to make much of a difference
        - We presumed weekend makes a difference, but it doesn't.
 
-      What can we do with this information? In other words, what do we tell marketing and product teams?
+      What can we do with this information? In other words, what do we tell product & sales teams?
       - Focus on optimizing product pages. Product pages usually have enough volume to do A/B testing (photos, copy, USP's etc.)
 
 PROJECT 5: FACEBOOK PERFORMANCE - How do we engage with potential customers on Facebook?
@@ -76,7 +76,11 @@ hierarchical and m-clust) to gather insights into post performance. Creating dif
 
 PROJECT 6: CUSTOMER CHURN - Why do customers churn and what can we do about it?
 
-My personal favorite and a common business task is to identify what factors lead customers to churn and how can we use this data to improve customer retention. 
+Churn definition: A measure of when a customer stops being a customer.
+
+It costs more money to acquire new customers than it is to keep the customers you already have. Successful companies know this and do what is needed to make sure new customer acquisition exceeds churn. A robust retention program is what it takes.
+
+My personal favorite project and a common business task is to identify what factors lead customers to churn and how can we use this knowledge to improve customer retention. 
 
 With this project, I predict customer churn rates and identify major churn factors through logistic regression and random forest modeling. With the output of these models, I was able to identify core insights for business stakeholders.
 
@@ -91,3 +95,6 @@ With this project, I predict customer churn rates and identify major churn facto
       - The analysis revealed $2 million USD in lost revenue due to churned customers.
 
 ![$2 4 million in lost revenue due to Fiber Optic internet service](https://user-images.githubusercontent.com/13710429/120935138-9c883900-c701-11eb-99f8-ac6c15bdd175.png)
+
+
+    Next steps: Now that we know which factors lead to churn, we can take steps to reduce the lost revenue. For example, we can integrate the machine learning model with our marketing applications or customer support applications.
