@@ -696,13 +696,26 @@ ggplot(data=pymt.method.df, aes(x=reorder(PaymentMethod, churn_rate), y=churn_ra
 
 ```
 
-We have uncovered some insights so far:
+We have uncovered some insights so far through data visualization and statistical tests:
+
+Low churners characteristics:
+-Very low churn for those users who don’t have the internet service!!!!
+
+High churners characteristics:
+-Fiber optic service
+-Senior Citizens
+-Slightly higher for singles & those with no dependents (but not statistically significant)
+-Paperless billing or electronic check
+-Month-to-month contracts
+
+Monthly charges has some association with churn as the churned customers are heavily represented on the higher end of the monthly charges. There is most likely a higher likelihood of churn once you reach a certain point on the monthly fee.
 
 
 Now we have to decide whether we should do some data modeling.
 
-## Step 5A: Data pre-proessing
 
+
+## Step 5A: Data pre-proessing
 
 
 ```{r Get data ready for modeling}

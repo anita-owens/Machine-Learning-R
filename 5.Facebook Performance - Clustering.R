@@ -6,7 +6,7 @@
 #    brand building: A data mining approach. Journal of Business Research, Elsevier, In press, Available online 
 #    since 28 February 2016.
 
-#browseURL("https://archive.ics.uci.edu/ml/datasets/Facebook+metrics")
+browseURL("https://archive.ics.uci.edu/ml/datasets/Facebook+metrics")
 
 
 ###### Data Description ###########
@@ -15,6 +15,57 @@
 # Facebook's page of a renowned cosmetics brand. This dataset contains 500 of
 # the 790 rows and part of the features analyzed by Moro et al. (2016). The
 # remaining were omitted due to confidentiality issues.
+
+
+
+#Have our activities been successful? This is a study of user behavior that will
+# most likely be shared with management or advertising agencies.
+
+#Categorical Variable descriptions:
+
+# 1. Type
+  # -the type of post (link, photo, status or video)
+
+# 2. Category
+  # - Type 1
+  # - Type 2
+  # - Type 3
+
+# 3. Post.Month
+  # - month of post
+
+# 4. Post.Weekday
+  # - day of week of the post
+
+# 5. Post.Hour
+  # - hour of day of the post
+
+# 6. Paid
+  # - binary variable whether the post was paid or unpaid
+
+#Let's look at the current definitions of our Continuous/Numeric variables 
+# which also includes some key metrics/KPI's we will analyze.
+
+# 1. impressions: impressions measure the number of times your posts were seen.
+# That includes if one post was seen multiple times by a single user. 
+
+# 2. Page Likes: are the number of people that follow your brand on Facebook. They liked
+# your page or opted-in to be able to have your posts show up in their feed. You
+# can think of them as fans or subscribers.  Page Likes show your audience size on Facebook.
+# Over time, that number should be growing. Facebook performance metrics of a renowned cosmetic's brand Facebook page.
+
+
+# 3. Reach: Reach is an indication of the number of people who see your material on Facebook.
+
+# 4. Engaged Users: The number of people who engaged with your Page. Engagement includes any
+# click or story created.
+
+# 5. Page Consumptions:  Total number of clicks
+
+# 6. Interactions: The number of interactions (reactions, comments, shares)
+# during a selected time range. The interactions are shown on the day the post
+# they relate to was published.
+
 
 ###### Load libraries ###########
 
@@ -90,10 +141,21 @@ fb_data[!complete.cases(fb_data),] #we get 5 rows that have missing data
 #using aggr function from VIM packages --missing values are in red
 aggr(fb_data, prop = F, numbers = T)
 
-#let's remove the missing rows
+#Remove the missing rows????
+# 5 rows won't impact our results that much, otherwise we could impute
 dim(fb_data) #500 rows of data
-fb_data <- fb_data[complete.cases(fb_data),]
-dim(fb_data) #now we have 495 rows of data
+
+#Uncomment below to remove the 5 rows
+#fb_data <- fb_data[complete.cases(fb_data),]
+#dim(fb_data) #If you run this code, you will have 495 rows of data
+
+
+#Imputation method - we will just impute with 0 instead
+fb_data[is.na(fb_data)] = 0
+
+#Check results
+dim(fb_data) #500 rows of data so we have successfully imputed
+
 
 ###### Explore Data: Data visualization ##############
 
@@ -103,33 +165,53 @@ dim(fb_data) #now we have 495 rows of data
 bar1 <- ggplot(fb_data, aes(x=factor(Type)))+
   geom_bar(stat="count", width=0.7, fill="sienna1")+
   theme_minimal()
+#Significantly more photo posts than other types
 
 bar2 <- ggplot(fb_data, aes(x=factor(Category)))+
   geom_bar(stat="count", width=0.7, fill="steelblue")+
   theme_minimal()
+#More category 1 posts, then 3, then 2
 
 bar3 <- ggplot(fb_data, aes(x=factor(Post.Month)))+
   geom_bar(stat="count", width=0.7, fill="salmon4")+
   theme_minimal()
+# More posts in October
 
 bar4 <- ggplot(fb_data, aes(x=factor(Post.Weekday)))+
   geom_bar(stat="count", width=0.7, fill="red4")+
   theme_minimal()
+# Saturday and Sunday are where the most posts happens
 
 plot_grid(bar1, bar2, bar3, bar4, labels = "AUTO")
+
+#Key insights:
+# 1. Significantly more photo posts than other types
+# 2. More category 1 posts, then 3, then 2
+# 3. More posts in October
+# 4. Saturday and Sunday are where the most posts happens
 
 #####Univariate Analysis: Boxplots for important independent numeric variables  ######
 
 # page_likes on y axis
-ggbi1 <- ggplot(data = fb_data, aes(x = Type, y = page_likes, fill = Type))+geom_boxplot() + stat_summary(fun.y=mean, geom="point", shape=20, size=14, color="red", fill="red")
+ggbi1 <- ggplot(data = fb_data, aes(x = Type, y = page_likes, fill = Type))+geom_boxplot() + stat_summary(fun=mean, geom="point", shape=20, size=8, color="red", fill="red")
 ggbi2 <- ggplot(data = fb_data, aes(x = factor(Category), y = page_likes, fill = Category))+geom_boxplot()
-ggbi3 <- ggplot(data = fb_data, aes(x = Post.Month, y = page_likes, fill = Post.Month))+geom_boxplot()
-ggbi4 <- ggplot(data = fb_data, aes(x = factor(Post.Weekday), y = page_likes, fill = Post.Weekday))+geom_boxplot()
-ggbi5 <- ggplot(data = fb_data, aes(x = factor(Post.Hour), y = page_likes, fill = Post.Hour))+geom_boxplot()
-ggbi6 <- ggplot(data = fb_data, aes(x = factor(Paid), y = page_likes, fill = Paid))+geom_boxplot()
+ggbi3 <- ggplot(data = fb_data, aes(x = factor(Post.Month), y = page_likes))+geom_boxplot()
+ggbi4 <- ggplot(data = fb_data, aes(x = factor(Post.Weekday), y = page_likes))+geom_boxplot()
+ggbi5 <- ggplot(data = fb_data, aes(x = factor(Post.Hour), y = page_likes))+geom_boxplot()
+ggbi6 <- ggplot(data = fb_data, aes(x = factor(Paid), y = page_likes, fill = factor(Paid)))+geom_boxplot()
 
 plot_grid(ggbi1, ggbi2, ggbi3, ggbi4, labels = "AUTO")
 plot_grid(ggbi5, ggbi6, labels = "AUTO")
+
+# Key insights on Page Likes:
+#   1. Videos and status gets better page likes than links and photos.
+#   2. Page likes have been increasing over the year which is a good sign.
+#   3. Page likes are consistent across days of week with more variability on days 5 &6.
+#   4. When it comes to the time of hour, it's quite strange. Lots of posting happening in the early
+#       morning hours. Not sure if this information/insight is actionable from a marketing stand-point as this process
+#       can be automated.
+#   5. No difference in page_likes between paid or unpaid segments
+  
 
 ###### Univariate Analysis: Histogram plots for important independent numeric variables##
 
@@ -151,6 +233,10 @@ hist3 <- ggplot(data = fb_data, aes(x = engaged_users))+
       geom_vline(aes(xintercept = median(engaged_users)), linetype = "dashed")
 
 plot_grid(hist1, hist2, hist3, labels = "AUTO")
+
+# When it comes to some core FB metrics in regards to visibility 
+# (reach, impressions, engaged_users),
+
 
 ##########Bivariate analysis: Boxplots for TYPE (as x variable) vs important numeric (y variables) ##########
 
@@ -284,7 +370,7 @@ alias(lm(page_likes ~ ., data = fb_data))
 linmodnoInt <- lm(page_likes ~ . -interactions, data = fb_data)
 summary(linmodnoInt)
 
-#Let's calcualte the VIF
+#Let's calculate the VIF
 vif(linmodnoInt)
 
 #very high VIF's for:
@@ -295,7 +381,7 @@ vif(linmodnoInt)
 # liked_imp
 # liked_reach
 # liked_engaged
-# commment - slightly high, but okay perhaps
+# commment - slightly high, but okay
 # like
 # share
 
@@ -309,39 +395,10 @@ vif(linmodnocol) # - much better no collinear variables
 
 ####################### Target variable for modeling ####################
 
+
+
 #What is the question we're trying to answer?: 
 #----Have we successfully built our brand on Facebook?
-
-#Have our activities been successful? This is a study of user behavior that will
-# most likely be shared with management or advertising agencies.
-
-
-#Let's look at the current definitions of our KPI's.
-
-# 1. impressions: impressions measure the number of times your posts were seen.
-# That includes if one post was seen multiple times by a single user. 
-
-# 2. Page Likes: are the number of people that follow your brand on Facebook. They liked
-# your page or opted-in to be able to have your posts show up in their feed. You
-# can think of them as fans or subscribers.  Page Likes show your audience size on Facebook.
-# Over time, that number should be growing.
-
-# 3. Reach: Reach is an indication of the number of people who see your material on Facebook.
-
-# 4. Engaged Users: The number of people who engaged with your Page. Engagement includes any
-# click or story created.
-
-# 5. Page Consumptions:  Total number of clicks
-
-# 6. Interactions: The number of interactions (reactions, comments, shares)
-# during a selected time range. The interactions are shown on the day the post
-# they relate to was published.
-
-
-# -What posts are most likely to be engaging?
-# -What are the characteristics of an engaging post?
-# - Are there any characteristics we can use to gain reach
-# & therefore build our brand?
 
 
 #What is our target variable for our modeling?
@@ -374,7 +431,18 @@ vif(linmodImproved) # - much better no collinear variables
 dataset <- fb_data %>% 
           select(Type, Category, Post.Month, 
             Post.Weekday, Post.Hour, Paid,
-            consumptions, reach, interactions, page_likes)
+            reach, impressions, engaged_users,
+            consumers, comment, like, share)
+
+str(dataset)
+
+#Get data into the right format if needed - We need to fix some variables
+dataset$Type <- as.factor(dataset$Type)
+dataset$Category <- as.factor(dataset$Category)
+dataset$Post.Month <- as.factor(dataset$Post.Month)
+dataset$Post.Weekday <- as.factor(dataset$Post.Weekday)
+dataset$Post.Hour <- as.factor(dataset$Post.Hour)
+dataset$Paid <- as.factor(dataset$Paid)
 
 str(dataset)
 
@@ -403,9 +471,11 @@ hcd <- as.dendrogram(fb_data_hc)
 # alternative way to get a dendrogram
 plot(hcd)
 
-#Dendogram is hard to read
+#Dendogram is hard to read, but there are large clusters up top
+# and lots of smaller and thinner clusters towards the bottom
+#It will be a bit hard to get the right cluster assignments.
 
-##### Step 3: Hclust Goodnes-of-fit #########
+##### Step 3: Hclust Goodness-of-fit #########
 
 #Finally we check for goodness of fit for a hierarchical clustering solution
 #method 1: cophenetic correlation coefficient (CPCC) which assesses how well
@@ -429,6 +499,7 @@ cor(cophenetic(fb_data_hc), fb_data_dist)
 #by overlaying its plot with rect.hclust(), specifying
 #the number of groups we want (k=...)
 #the dendogram suggests possibly 5 clusters
+#albeit this is really open to interpretation
 
 plot(fb_data_hc)
 rect.hclust(fb_data_hc, k=5, border="red")
@@ -442,6 +513,28 @@ table(fb_data_hc_segment) #check assignments
 #Groups 1 dominates the assignment, followed by
 #groups 4 and 5, 3, & 2. The clusters are not well-balanced.
 #group 2 is the smallest clusters at 38 observations.
+
+
+
+#Let's try to create larger segments k = 8
+
+plot(fb_data_hc)
+rect.hclust(fb_data_hc, k=8, border="blue")
+
+
+fb_data_hc_segment <- cutree(fb_data_hc, k=8)
+table(fb_data_hc_segment) #check assignments
+
+
+#Let's try to create larger segments k= 10
+
+plot(fb_data_hc)
+rect.hclust(fb_data_hc, k=10, border="green")
+
+
+fb_data_hc_segment <- cutree(fb_data_hc, k=10)
+table(fb_data_hc_segment) #check assignments
+
 
 
 #We will be able to answer the following questions:
@@ -476,6 +569,10 @@ table(fb_data$Type) #how was type
 
 #Insights based on hclust ML algorithm:
 
+    # The questions we are trying to answer include:
+    # -What posts are most likely to be engaging?
+    # -What are the characteristics of an engaging post?
+    # - Are there any characteristics we can use to gain reach & therefore build our brand?
 
 #Group 4 stands out at having the most reach 
 # type (2) post - photo that has the most reach
@@ -672,8 +769,8 @@ fb_data_num_mc5 <- Mclust(fb_data_num, G=5)
 summary(fb_data_num_mc5)
 
 #Forcing it to find 5 clusters resulted in a similar model 
-# with slightly lower log-likelihood, a
-#The clusters on first appearance look well-situated.
+# with slightly lower log-likelihood
+#The clusters at first glance look well-situated.
 
 #Comparing models with BIC()
 #We compare the original cluster and 
@@ -684,7 +781,8 @@ BIC(fb_mclust_mod, fb_data_num_mc5)
 
 #Bic difference is: -1803.56
 42952.97-44756.53
-#8 clusters seem to work better
+#8 clusters seem to work better so that is what we'll go with, even though
+#the number of clusters can seem a bit arbitrary.
 
 ######### ML Method 4: k-means revisited with 8 centers ############
 
@@ -726,3 +824,5 @@ table(fb_data_hc_segment, kmeans_model_8clus$cluster)
 # Although 8 clusters were more statistically sound,
 # it didn't lead to better insights than our original
 # hclust model.
+
+#The insights we gathered from the hclust model still hold.
