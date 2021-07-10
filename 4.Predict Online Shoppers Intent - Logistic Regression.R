@@ -4,16 +4,16 @@
 
 ######Load libraries###########
 
-library(rpart)
-library(psych)
-library(dplyr)
-library(corrplot)
-library(ggplot2)
-library(cowplot)
-library(tree)
-library(VIM)
-library(GGally)
-library(lubridate)
+
+# Install pacman if needed
+if (!require("pacman")) install.packages("pacman")
+
+# load packages
+pacman::p_load(pacman,
+  tidyverse, rpart, psych, corrplot, cowplot, tree, VIM, GGally, lubridate)
+
+#Dataset found here:
+browseURL("https://archive.ics.uci.edu/ml/datasets/Online+Shoppers+Purchasing+Intention+dataset")
 
 
 # The dataset consists of feature vectors belonging to 12,330 sessions.
@@ -57,7 +57,7 @@ library(lubridate)
 # sessions are more likely to be finalized with transaction. The value of this
 # attribute is determined by considering the dynamics of e-commerce such as the
 # duration between the order date and delivery date. For example, for
-# Valentina’s day, this value takes a nonzero value between February 2 and
+# Valentine’s day, this value takes a nonzero value between February 2 and
 # February 12, zero before and after this date unless it is close to another
 # special day, and its maximum value of 1 on February 8. 
 
@@ -65,9 +65,6 @@ library(lubridate)
 # includes operating system, browser, region, traffic type, visitor type as
 # returning or new visitor, a Boolean value indicating whether the date of the
 # visit is weekend, and month of the year.
-
-#Dataset found here:
-browseURL("https://archive.ics.uci.edu/ml/datasets/Online+Shoppers+Purchasing+Intention+dataset")
 
 
 #browseURL("https://cxl.com/blog/correlative-metrics/")
@@ -142,14 +139,17 @@ names(dataset) #check results
 bar1 <- ggplot(dataset, aes(x=factor(month)))+
   geom_bar(stat="count", width=0.7, fill="sienna1")+
   theme_minimal()
+#May, November, December has the most visits
 
 bar2 <- ggplot(dataset, aes(x=factor(OperatingSystems)))+
   geom_bar(stat="count", width=0.7, fill="steelblue")+
   theme_minimal()
+#OS 2 highly-represented whatever that means
 
 bar3 <- ggplot(dataset, aes(x=factor(Browser)))+
   geom_bar(stat="count", width=0.7, fill="salmon4")+
   theme_minimal()
+#Browser 2 highly-represented whatever that means
 
 bar4 <- ggplot(dataset, aes(x=factor(Region)))+
   geom_bar(stat="count", width=0.7, fill="red4")+
@@ -224,7 +224,7 @@ plot_grid(ggbi1,  labels = "AUTO")
 
 
 
-##########Bivariate analysis: Boxplots for Revenue (as x variable) vs important numeric (y variables) ##########
+##########Bivariate analysis: Boxplots/Barplots with multiple groups for Revenue (as x variable) vs important numeric (y variables) ##########
 
 bi1 <- ggplot(data = dataset, aes(x = factor(revenue), y = Administrative, fill = revenue))+geom_boxplot()
 bi2 <- ggplot(data = dataset, aes(x = factor(revenue), y = Informational, fill = revenue))+geom_boxplot()
@@ -234,22 +234,38 @@ bi4 <- ggplot(data = dataset, aes(x = factor(revenue), y = OperatingSystems, fil
 plot_grid(bi1, bi2, bi3, bi4, labels = "AUTO")
 
 
+ggplot(data = dataset, aes(x = factor(VisitorType), y = Administrative,  fill = revenue)) + geom_bar(stat="identity")
+ggplot(data = dataset, aes(x = factor(VisitorType), y = Informational, fill = revenue)) + geom_bar(stat="identity")
+ggplot(data = dataset, aes(x = factor(VisitorType), y = Informational, fill = revenue)) + geom_bar(stat="identity")
+ggplot(data = dataset, aes(x = factor(Region), y = SpecialDay, fill = revenue)) + geom_bar(stat="identity")
+
 # When we look at the data visualization from bivariate analysis of numeric
 # variables against the categorical revenue variable, we get the following
 # insights:
 
+# 1. Slightly more revenue from administrative
+# 2. Informational driving more revenue
+# 3. No difference among product-related
+# 4. Operating system seemingly over-represented
+# 5. Slightly more revenue on Special Day from Region 1 than the other regions
 
+########### Examining Relationships through two-way cross tabulations or pivot tables ############
 
-
-########### Examining Relationships through two-way cross tabulations ############
+# Pivoting your data is a powerful analysis technique that derives a lot of insights on its own.
 
 #A purchase was made in 15% of all visits 
 tab <- table(dataset$revenue)
 prop.table(tab) 
 
 
-# 2-Way Cross Tabulation
+# 2-Way Cross Tabulation using GMODELS package
 library(gmodels)
+
+#Conversion rate is nearly 3x that approaching Special Day than a non-Special Day
+# This indicates the importance of marketing activities prior to important holidays
+#Where sales are higher
+CrossTable(dataset$SpecialDay, dataset$revenue, digits=2, prop.c = FALSE,
+  prop.r = TRUE, prop.t = FALSE, chisq = FALSE, format = "SAS", expected = FALSE)
 
 #41% of all purchases came from OS 3.
 CrossTable(dataset$OperatingSystems, dataset$revenue, digits=2, prop.c = FALSE,
@@ -262,6 +278,7 @@ CrossTable(dataset$Browser, dataset$revenue, digits=2, prop.c = FALSE,
 
 #Region 1 makes up 39% of our traffic (the majority)
 #but there doesn't seem to be a big difference in CvR amongst the regions
+#They seem to be anywhere between 13% to 17%
 CrossTable(dataset$Region, dataset$revenue, digits=2, prop.c = FALSE,
   prop.r = TRUE, prop.t = TRUE, chisq = FALSE, format = "SAS", expected = FALSE)
 
@@ -283,6 +300,7 @@ CrossTable(dataset$weekend, dataset$revenue, digits=2, prop.c = FALSE,
 #May & November are the best months for revenue
 CrossTable(dataset$month, dataset$revenue, digits=2, prop.c = FALSE,
   prop.r = TRUE, prop.t = FALSE, chisq = FALSE, format = "SAS", expected = FALSE)
+
 
 
 ############# Exploring Associations Between Numeric Variables - Correlation Tests ################
@@ -322,20 +340,19 @@ dataset %>%
 dataset <- dataset %>% 
       select(-month)
 
-#recode target variable to classification variable
-str(dataset$revenue)
-dataset$revenue <- as.factor(dataset$revenue)
-str(dataset$revenue) #check results
+#re-code variables if needed to put the into the proper format for modeling
+dataset_01 <- dataset %>% 
+  purrr::modify_at(c("revenue", "VisitorType", "weekend", "OperatingSystems", "Browser", "Region", "TrafficType"), factor)
 
-glimpse(dataset)
+str(dataset_01)
 
 library(caTools)
 set.seed(123)
 
 ## split the dataset into training and test samples at 70:30 ratio
-split <- sample.split(dataset$revenue, SplitRatio = 0.7)
-train_data <- subset(dataset, split == TRUE)
-test_data <- subset(dataset, split == FALSE)
+split <- sample.split(dataset_01$revenue, SplitRatio = 0.7)
+train_data <- subset(dataset_01, split == TRUE)
+test_data <- subset(dataset_01, split == FALSE)
 
 ## Check if distribution of partition data is correct for the development dataset
 prop.table(table(train_data$revenue))
@@ -359,7 +376,12 @@ library(glmnet)
 # Then, extract the coefficients and transform them to the odds ratios.
 
 #Step 1: Run Logistic Regression on the train data
-logreg <- glm(revenue ~ ., 
+# Removing categorical variables that have too many levels for logistic regression
+# to handle
+logreg <- glm(revenue ~ Administrative + Administrative_Duration + 
+                Informational + Informational_Duration + ProductRelated + 
+                ProductRelated_Duration + BounceRates + ExitRates + 
+                PageValues + SpecialDay + VisitorType + weekend, 
                 family = binomial, data = train_data)
 
 # Take a look at the model
@@ -369,8 +391,8 @@ summary(logreg)
 # From the summary of the generated model, we infer that there are some independent
 # variables that are significant based on their p value. 
 
-#The p-values associated with ExitRates,
-# PageValues, VisitorTypes, are so tiny we can reject
+#The p-values associated with ProductRelated, ExitRates,
+# PageValues, VisitorTypeReturning_visitor, SpecialDay are so tiny we can reject
 #the null hypothesis. There indeed is an association between
 #revenue and these characteristics of the customer.
 
@@ -385,10 +407,7 @@ coefsexp
 
 #We can plot the coefficients by their significance
 library(coefplot)
-coefplot(logreg, intercept = FALSE,
-  outerCI=1.96, lwdOuter=1.5,
-  ylab="Characteristics",
-  xlab="")
+coefplot(logreg, sort = "magnitude")
 
 
 ########## Step 1a: Variable Inflation Factor check############################## 
@@ -416,10 +435,8 @@ vif(logreg)
 #multicollinearity does not bias coefficients; it inflates their standard errors.
 # multicollinearity does not usually alter the interpretation of the coefficients of interest unless they lose statistical significance.
 
-#poutcome and job has a high VIF, we will remove it from our model and run log regression again
-#to compare
 
-logreg_var_remov <- glm(revenue ~ . -ProductRelated -ProductRelated_Duration, 
+logreg_var_remov <- glm(revenue ~ . -OperatingSystems -Browser -Region -TrafficType -ProductRelated -ProductRelated_Duration, 
                 family = binomial, data = train_data)
 
 # Take a look at the model
@@ -508,7 +525,7 @@ View(coefsexDF)
 
 ######Step 5: Model Accuracy#################
 
-pred <- predict(logreg, test_data, type = "response") #predict using test data
+pred <- predict(logreg, newdata = test_data, type = "response") #predict using test data
 
 #check results
 head(pred)
@@ -521,7 +538,7 @@ contingency_tab
 
 #sum the diagnals for the percentage accuracy classified
 sum(diag(contingency_tab))/sum(contingency_tab) *100
-# ---- Our model leads 88% to correct predictions
+# ---- Our model leads to approximately 88% of correct predictions
 
 #Calculate accuracy using Caret package
 caret::confusionMatrix(contingency_tab)
@@ -571,7 +588,6 @@ heatmap(t(importance(rf_mod)[,1:2]), margins = c(10,10), main = "Variable import
 #column in differentiating a segment row.
 
 
-
 #This states that page values are more important
 #however, page value is an arbitrary value most
 #likely assigned by marketing or an analyst to measure website
@@ -584,4 +600,17 @@ heatmap(t(importance(rf_mod)[,1:2]), margins = c(10,10), main = "Variable import
 #This confirms a lot of what we saw in the logistic
 #regression model
 
-#No need to improve the model
+#No need to improve the model - we were able to derive enough insights
+# to give to our business stakeholders.
+
+#### FINAL SUMMARY -------------------
+
+# CVR Baseline - 15%
+
+# FOCUS ON RETURNING USERS SEGMENT
+
+  #We're much better at converting new users than returning users 25% cVr
+  #returning users cvr is half that of new users 14% CvR
+  #returning users mkes up 86% of all traffic
+
+# FOCUS ON email marketing &  A/B testing of product pages

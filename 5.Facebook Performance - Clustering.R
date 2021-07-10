@@ -206,10 +206,10 @@ plot_grid(ggbi5, ggbi6, labels = "AUTO")
 # Key insights on Page Likes:
 #   1. Videos and status gets better page likes than links and photos.
 #   2. Page likes have been increasing over the year which is a good sign.
-#   3. Page likes are consistent across days of week with more variability on days 5 &6.
+#   3. Page likes are consistent across days of week with more variability on days 5 & 6.
 #   4. When it comes to the time of hour, it's quite strange. Lots of posting happening in the early
 #       morning hours. Not sure if this information/insight is actionable from a marketing stand-point as this process
-#       can be automated.
+#       is most likely an automated process.
 #   5. No difference in page_likes between paid or unpaid segments
   
 
@@ -401,10 +401,10 @@ vif(linmodnocol) # - much better no collinear variables
 #----Have we successfully built our brand on Facebook?
 
 
-#What is our target variable for our modeling?
+# What is our target variable for our modeling? Which KPI's are we trying to explain?
 
 # - we will use page likes as our target kpi >> engagement with brand
-# - we will also use interactions as our 2ndary kpi >> behavior customer
+# - we will also use interactions as our 2ndary kpi >> customer behavior
 # - will use reach as a 3rd kpi
 
 #try a new baseline model with the addt'l variables we removed earlier
@@ -426,7 +426,7 @@ vif(linmodImproved) # - much better no collinear variables
 #Cannot assume that factor variables are irrelevant
 #to our cluster definitions; it is better to use all data
 #the daisy function in the cluster package works with mixing
-#data types by rescaling the values, so we can use euclidean distance
+#data types by re-scaling the values, so we can use euclidean distance
 
 dataset <- fb_data %>% 
           select(Type, Category, Post.Month, 
@@ -539,10 +539,11 @@ table(fb_data_hc_segment) #check assignments
 
 #We will be able to answer the following questions:
 
-# 1-are there obvious differences in group means?
-# 2-does the differentiation point to some underlying story to tell?
-# 3-do we see immediately odd results such as a mean equal to the value of
-#   one data level?
+# 1-Are there obvious differences in group means? 
+#    - Hypothesis testing to help us understand the segments
+# 2-Are the groups differentiated enough to tell us a story?
+# 3-Do we see immediately odd results (e.g. a mean equal to the value of
+#   one data level?)
 
 
 #check results of cluster assignments against dataset using custom function
@@ -570,9 +571,9 @@ table(fb_data$Type) #how was type
 #Insights based on hclust ML algorithm:
 
     # The questions we are trying to answer include:
-    # -What posts are most likely to be engaging?
-    # -What are the characteristics of an engaging post?
-    # - Are there any characteristics we can use to gain reach & therefore build our brand?
+      # -What posts are most likely to be engaging?
+      # -What are the characteristics of an engaging post?
+      # - Are there any characteristics we can use to gain reach & therefore build our brand?
 
 #Group 4 stands out at having the most reach 
 # type (2) post - photo that has the most reach
@@ -591,7 +592,7 @@ table(fb_data$Type) #how was type
 
 # Groups 3 stands out immediately as having
 #the most interactions. Not really
-# actionable here because of the number of observations
+# actionable here because of the small number of observations
 
 #All segments indicate that the day of the week
 #the post lands on is important. Also that
@@ -606,8 +607,7 @@ table(fb_data$Type) #how was type
 #no alternation of meaning.
 
 #Although it's not optimal to cluster binary/categorical values
-#with k-means, 
-#we might attempt it. 
+#with k-means, we will attempt it
 #We just need to fix the type category
 
 #1 - Link
@@ -745,16 +745,16 @@ fviz_silhouette(pam_k5) #print avg silhouette in table format
 
 ######### ML Method 3: Model-based Clustering Mclust() ############
 
-#A limitation of k-means analysis is that it requires specifying the number of clusters
+#A limitation of k-means is that it requires specifying the number of clusters
 #and it can be difficult to determine whether one solution is better than another.
 
-#There is an algorithm itself that can suggest how many
-#clusters are in the data: model-based clustering
+#There one algorithm itself that can suggest how many
+#clusters are in the data by optimizing the fit of the model: model-based clustering
 
-#mclust models data with normal distribution, 
+#mclust models data with normal or Guassian distribution, 
 # it only uses numeric data.
 #data not entirely normally distributed but
-#will attempt this anyway
+#will attempt this anyway to see what kind of results we get.
 
 fb_mclust_mod <- Mclust(fb_data_num)
 
@@ -823,6 +823,40 @@ table(fb_data_hc_segment, kmeans_model_8clus$cluster)
 
 # Although 8 clusters were more statistically sound,
 # it didn't lead to better insights than our original
-# hclust model.
+# hclust model.The insights we gathered from the hclust model still hold.
 
-#The insights we gathered from the hclust model still hold.
+#####ANALYSIS SUMMARY FOR MARKETING STAKEHOLDERS ------------------------------------
+
+# Key insights on Page Likes:
+#   1. Videos and status gets better page likes than links and photos.
+#   2. Page likes have been increasing over the year which is a good sign.
+#   3. Page likes are consistent across days of week with more variability on days 5 & 6.
+#   4. When it comes to the time of hour, it's quite strange. Lots of posting happening in the early
+#       morning hours. Not sure if this information/insight is actionable from a marketing stand-point as this process
+#       is most likely an automated process.
+#   5. No difference in page_likes between paid or unpaid segments
+
+
+#Group 4 stands out at having the most reach 
+# type (2) post - photo that has the most reach
+# and average interactions and next to highest
+#consumptions and is an unpaid segment
+#if we care about audience reach for very little
+#money this segment should take care of that
+
+
+# Group 1 dominates in number of observations. It's an
+# unpaid segment with
+# the most average page likes. Type is photo
+# This indicates that posting photos goes a long way in
+# engaging users with our FB page.
+
+
+# Groups 3 stands out immediately as having
+#the most interactions. Not really
+# actionable here because of the small number of observations
+
+#All segments indicate that the day of the week
+#the post lands on is important. Also that
+#photos tend to dominate the type of post that helps
+#us reach our branding goals.

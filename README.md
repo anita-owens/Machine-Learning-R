@@ -63,6 +63,7 @@ The goal is to identify what characteristics makes a converting customer? What o
 
       What can we do with this information? In other words, what do we tell product & sales teams?
       - Focus on optimizing product pages. Product pages usually have enough volume to do A/B testing (photos, copy, USP's etc.)
+      - Email marketing is important here. When we send emails to existing customers we should make sure the links point to a product page of interest.
 
 PROJECT 5: FACEBOOK PERFORMANCE - How do we engage with potential customers on Facebook?
 
