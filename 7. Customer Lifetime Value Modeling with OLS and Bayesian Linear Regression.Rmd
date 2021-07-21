@@ -288,30 +288,7 @@ Our actual sales for the past 3 month is 1196.
 Not too far away from forecasted amount.
 
 
-We will run 10-fold cross-validation
-
-```{r 10 fold cross-validation}
-library(caret)
-# Fit lm model using 10-fold CV: model on entire dataset
-sales_cv_model <- train(
-  sales_last_3mon ~ avg_sales + avg_item_price + n_purchases +
-    days_since_last_purch + customer_duration, 
-  data = df_grouped,
-  method = "lm",
-  trControl = trainControl(
-    method = "cv", 
-    number = 10,
-    verboseIter = TRUE
-  )
-)
-
-# Print model to console
-print(sales_cv_model)
-```
-
-RMSE = 9881.195 and Rsquared = 0.4028907
-
-We have a much lower r-squared on the cross-validated model. We also have a much higher RMSE. This is not a good sign! Perhaps some customers are skewing the data in the validation process. We need to look for outliers or high-leverage observations. Will use the broom package to do this. 
+We need to look for outliers or high-leverage observations. Will use the broom package to do this. 
 
 ```{r Leverage computations from sales_model}
 sales_model %>% 
@@ -326,43 +303,51 @@ The leverage scores (.hat column) show 3 observations with high leverage, but it
 
 Upon closer inspection of df_grouped, there is a customer with 1 very large purchase (customer_id 16446). The second observation (customer_id 16742) had 1 order with a a very high average price. The third observation (customer_id 14096) has very high number of orders 5000+. We will remove these observations as they are having a big effect on our model and re-model again.
 
-```{r Attempt 2 - 10-fold cross validation}
 
+```{r Remove outliers}
 df_outliers_removed <- df_grouped %>% 
   filter(customer_id != 16446 && customer_id != 16742 && customer_id != 14096)
-
-library(caret)
-# Fit lm model using 10-fold CV: model on entire dataset
-sales_cv_model <- train(
-  sales_last_3mon ~ avg_sales + avg_item_price + n_purchases +
-    days_since_last_purch + customer_duration, 
-  data = df_outliers_removed,
-  method = "lm",
-  trControl = trainControl(
-    method = "cv", 
-    number = 15,
-    verboseIter = TRUE
-  )
-)
-
-# Print model to console
-print(sales_cv_model)
 ```
-Our r-squared actually decreased but so did our RMSE so we improved the accuracy of the model.
 
-```{r Model summary of Cross-Validated Model}
-summary(sales_cv_model)
+
+
+```{r 2nd iteration - We need to split data into test train}
+# Determine row to split on: split
+split <- round(nrow(df_outliers_removed) * 0.80)
+
+# Create train
+train <- df_grouped[1:split,]
+
+# Create test
+test <- df_grouped[(split + 1):nrow(df_outliers_removed),]
 ```
+
+```{r 2nd iteration - We want to run the linear regression model}
+# Conduct regression on training set
+sales_model_02  <- train %>%
+  lm(
+    sales_last_3mon ~ avg_sales + avg_item_price + n_purchases + days_since_last_purch + customer_duration,  # "as a function of"
+    data = .
+  ) 
+
+# Show summary
+sales_model_02 %>% summary()
+```
+
+Our r-squared actually did not move that much, but now we get different coefficients
+which does change our interpretations and our forecasts for the CLV.
+
+
 
 ## Interpretation of the coefficients & learnings from the OLS model:
 
-1.  48% of the variation in CLV can be explained by our independent variables. The remaining variation goes unexplained. The value of CLV would be -137 when all of my variables are 0 which doesn't have a managerial interpretation.
+1.  71% of the variation in CLV can be explained by our independent variables. The remaining variation goes unexplained. The value of CLV would be -144 when all of my variables are 0 which doesn't have a managerial interpretation.
 2.  Our model is significant with the low p-value
 3.  The effect of avg_sales and n_purchases and days_since_last_purch and customer_duration are statistically significant.
 4.  A one unit increase in avg_sales leads to 1 currency (british pounds) increase in CLV.
-5.  For each additional purchase order per customer increases CLV by 11 british pounds.
-6.  The longer the time since the customer's last order (for every day), reduces CLV by 19 british pounds.
-7.  For each additional day we acquire a new customer, we increase CLV by 22 british pounds.
+5.  For each additional purchase order per customer increases CLV by 13 british pounds.
+6.  The longer the time since the customer's last order (for every day), reduces CLV by 12 british pounds.
+7.  For each additional day we acquire a new customer, we increase CLV by 15 british pounds.
 
 ## Customer Lifetime Value (CLV) Modeling with Bayesian Linear Regression
 
@@ -376,7 +361,7 @@ We will compare against the classic frequentist OLS model from above.
 library(rstanarm)
 
 # Conduct regression
-sales_bayes_model <- df_outliers_removed %>%
+sales_bayes_model <- train %>%
   stan_glm(
     sales_last_3mon ~ avg_sales + avg_item_price + n_purchases + days_since_last_purch + customer_duration,
     data = .,
