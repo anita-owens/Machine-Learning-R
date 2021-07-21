@@ -720,7 +720,7 @@ Now we have to decide whether we should do some data modeling.
 
 ```{r Get data ready for modeling}
 #let's use a fresh dataset
-df_raw <- read.csv("~/R_Programming/HI Bootcamp/Telco-Customer-Churn.csv")
+df_raw <- read.csv("~/Documents/GitHub/Machine-Learning-R/Machine-Learning-R/datasets/Telco-Customer-Churn.csv")
 
 #str(df_raw) #check results
 

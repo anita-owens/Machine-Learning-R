@@ -34,11 +34,11 @@ browseURL("https://archive.ics.uci.edu/ml/datasets/Online+Shoppers+Purchasing+In
 # total time spent in each of these page categories. The values of these
 # features are derived from the URL information of the pages visited by the user
 # and updated in real time when a user takes an action, e.g. moving from one
-# page to another. 
+# page to another.
 
 #The "Bounce Rate", "Exit Rate" and "Page Value" features
 # represent the metrics measured by "Google Analytics" for each page in the
-# e-commerce site. 
+# e-commerce site.
 
 #The value of "Bounce Rate" feature for a web page refers to
 # the percentage of visitors who enter the site from that page and then leave
@@ -47,7 +47,7 @@ browseURL("https://archive.ics.uci.edu/ml/datasets/Online+Shoppers+Purchasing+In
 
 #The value of "Exit Rate" feature for a specific web page
 # is calculated as for all pageviews to the page, the percentage that were the
-# last in the session. 
+# last in the session.
 
 #The "Page Value" feature represents the average value for
 # a web page that a user visited before completing an e-commerce transaction.
@@ -59,7 +59,7 @@ browseURL("https://archive.ics.uci.edu/ml/datasets/Online+Shoppers+Purchasing+In
 # duration between the order date and delivery date. For example, for
 # Valentine’s day, this value takes a nonzero value between February 2 and
 # February 12, zero before and after this date unless it is close to another
-# special day, and its maximum value of 1 on February 8. 
+# special day, and its maximum value of 1 on February 8.
 
 #The dataset also
 # includes operating system, browser, region, traffic type, visitor type as
@@ -99,11 +99,9 @@ dataset <- dataset %>%
       mutate(weekend = ifelse(Weekend == "FALSE", 0,1),
             revenue = ifelse(Revenue == "FALSE", 0,1))
 
-#check results
+#check results of recoding
 head(dataset)
 
-table(dataset$Revenue)
-table(dataset$revenue)
 
 
 ##################### Transformation: Remove unneeded variables and factor variables #######################

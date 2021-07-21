@@ -1,0 +1,400 @@
+---
+title: "Customer Lifetime Value (CLV) Modeling with Linear Regression"
+output: html_notebook
+---
+
+```{r Dataset}
+browseURL("https://archive.ics.uci.edu/ml/datasets/Online+Retail+II")
+```
+
+Data Set Information:
+
+This Online Retail II data set contains all the transactions occurring for a UK-based and registered, non-store online retail between 01/12/2009 and 09/12/2011.The company mainly sells unique all-occasion gift-ware.
+Many customers of the company are wholesalers.
+
+Attribute Information:
+
+InvoiceNo: Invoice number.
+Nominal.
+A 6-digit integral number uniquely assigned to each transaction.
+If this code starts with the letter 'c', it indicates a cancellation.
+StockCode: Product (item) code.
+Nominal.
+A 5-digit integral number uniquely assigned to each distinct product.
+Description: Product (item) name.
+Nominal.
+Quantity: The quantities of each product (item) per transaction.
+Numeric.
+InvoiceDate: Invice date and time.
+Numeric.
+The day and time when a transaction was generated.
+UnitPrice: Unit price.
+Numeric.
+Product price per unit in sterling (Â£).
+CustomerID: Customer number.
+Nominal.
+A 5-digit integral number uniquely assigned to each customer.
+Country: Country name.
+Nominal.
+The name of the country where a customer resides.
+
+```{r Install and load packages}
+# Install pacman if needed
+if (!require("pacman")) install.packages("pacman")
+
+# load packages
+pacman::p_load(pacman,
+  tidyverse, rpart, psych, corrplot, cowplot, tree, VIM, GGally, lubridate, car)
+```
+
+```{r Import dataset}
+#import file
+dataset_2009 <- read.csv("~/Documents/GitHub/Machine-Learning-R/Machine-Learning-R/datasets/online_retail_2009.csv")
+
+head(dataset_2009) #check results
+
+dataset_2010 <- read.csv("~/Documents/GitHub/Machine-Learning-R/Machine-Learning-R/datasets/online_retail_2010.csv")
+head(dataset_2010) #check results
+```
+
+```{r Any missing data}
+#any missing data? Using aggr function from VIM package
+aggr(dataset_2009, prop = F, numbers = T) # no red - no missing values
+
+aggr(dataset_2010, prop = F, numbers = T) # no red - no missing values
+
+```
+
+Some customerID's are missing.
+
+```{r Combine datasets}
+
+df_combined <- rbind(dataset_2009, dataset_2010)
+
+dim(df_combined)
+```
+
+
+
+```{r Explore combined dataset}
+(df_summary_stats <- df_combined %>% 
+  summary())
+```
+
+1067371 total rows.
+Lots of negative values for quantity and price.
+These rows will need to be removed.
+
+
+```{r Remove negative value orders and those with no customer ids and test orders}
+
+df <- df_combined %>% 
+  filter(Quantity > 0) %>% 
+  filter(Price > 0) %>% 
+  filter(Customer.ID != "NA") %>% 
+  filter(!grepl("TEST", StockCode))
+
+dim(df)
+```
+
+Removed negative orders and now have 805,539 rows of data
+
+```{r Reformat variables - InvoiceDate}
+
+str(df$InvoiceDate)
+#Date is character type, but needs to be date type
+
+#Get summary stats on date column
+df %>% 
+  select(InvoiceDate) %>% 
+  summarize_all(funs(min, max))
+
+#Convert to date type - this works swimmingly!
+df$InvoiceDate <- mdy_hm(df$InvoiceDate)
+
+#check results
+str(df$InvoiceDate)
+```
+
+
+
+```{r Add a date anchor to dataframe}
+
+#We will use the most recent purchase date in the data as our time_now variable
+df <- df %>% 
+  mutate(time_now = max(df$InvoiceDate))
+
+#check results
+str(df$time_now)
+```
+
+```{r Add days_since column and format to numeric time interval}
+# df <- df %>% 
+#   mutate(days_since = as.numeric(InvoiceDate - time_now),
+#          purchase_amount = Quantity * Price)
+
+df_01 <- df %>% 
+  mutate(days_since = round(as.numeric(difftime(time_now, InvoiceDate, units = "days"))),
+         purchase_amount = Quantity * Price)
+
+str(df_01$days_since)
+str(df_01$purchase_amount)
+
+head(df_01)
+```
+
+```{r Rename some columns}
+
+#This will make our lives easier when moving to SQL for data transformation
+df_02 <- df_01 %>% 
+  rename(
+    customer_id = Customer.ID,
+    stock_code = StockCode,
+    invoice_date = InvoiceDate
+  )
+```
+
+## Customer Lifetime Value (CLV) Modeling with Linear Regression (OLS)
+
+```{r Get our data in the right format}
+#load zoo library
+library(zoo)
+#We will use df_02
+head(df_02)
+
+
+#We need to add a quarter & month column to dataframe from our invoice_date
+df_03 <- df_02%>% 
+  mutate(year_quarter = as.yearqtr(invoice_date, format = "%Y-%m-%d"),
+year_month = as.yearmon(invoice_date))
+
+#check results
+head(df_03)
+
+#Get summary stats on year_quarter column
+df_03 %>% 
+  select(year_quarter) %>% 
+  summarize_all(funs(min, max))
+
+#Get summary stats on year_month column
+df_03 %>% 
+  select(year_month) %>% 
+  summarize_all(funs(min, max))
+
+```
+
+
+
+```{r Filter on the last quarterly data that we have}
+#filter on most recent customers only
+#We don't have a full 3 months of data for the 4th quarter of 2011 so we need to expand it to include 3 months
+
+#Testing the date filter logic to use in the next step
+as.Date(max(df_03$invoice_date)) - 90
+
+df_filtered <- df_03 %>% 
+filter(invoice_date  >= as.Date(max(df_03$invoice_date)) - 90)
+
+#check results
+glimpse(df_filtered)
+table(df_filtered$year_month)
+```
+
+```{r Group sales data by customer and quarters}
+df_grouped <- df_filtered %>% 
+  group_by(customer_id) %>% 
+  summarize(sales_last_3mon = sum(purchase_amount),
+            avg_sales = round(mean(purchase_amount),2),
+            avg_item_price = mean(Price),
+            n_purchases = n(),
+            days_since_last_purch = round(min(days_since),2),
+            customer_duration = round(max(days_since),2))
+
+head(df_grouped)
+```
+
+```{r Check Correlation}
+# Visualization of correlations
+df_grouped %>% select_if(is.numeric) %>%
+  select(-customer_id) %>%
+  cor() %>% 
+  corrplot(method = "circle", type = "upper", insig = "blank", diag = FALSE, addCoef.col = "grey")
+```
+
+Strong correlation between sales for the last 3 months and mean sales.
+
+Assumptions of simple linear regression model
+
+1.linear relationship between x and y
+2.no measurement error in X (weak exogoeneity)
+3. independence of errors expectation of errors is 0
+4. constant variance of prediction errors (homoscedasticity)
+5. normality of errors
+
+```{r We need to split data into test train}
+# Determine row to split on: split
+split <- round(nrow(df_grouped) * 0.80)
+
+# Create train
+train <- df_grouped[1:split,]
+
+# Create test
+test <- df_grouped[(split + 1):nrow(df_grouped),]
+```
+
+```{r We want to run the linear regression model}
+# Conduct regression on training set
+sales_model  <- train %>%
+  lm(
+    sales_last_3mon ~ avg_sales + avg_item_price + n_purchases + days_since_last_purch + customer_duration,  # "as a function of"
+    data = .
+  ) 
+
+# Show summary
+sales_model %>% summary()
+```
+
+We have quite a few significant variables. A decent r-squared and low-p-value for the model.
+
+```{r Create the predictions}
+
+# Predict on test set
+preds <- predict(sales_model, test, type = "response")
+
+# Compute errors
+error <- preds - test$sales_last_3mon
+
+# Calculate RMSE
+sqrt(mean((preds - test$sales_last_3mon)^2))
+```
+
+RMSE = 6944.564
+
+We check VIF to avoid multicollinearity.
+There are no high VIF's to worry about.
+
+```{r Check Variance Influence Factor}
+car::vif(sales_model)
+```
+
+```{r Can we predict future sales}
+# Calculating mean of future sales
+mean(preds, na.rm = TRUE)
+
+```
+
+Our predicted sales are 1143.
+Our actual sales for the past 3 month is 1196.
+Not too far away from forecasted amount.
+
+
+We will run 10-fold cross-validation
+
+```{r 10 fold cross-validation}
+library(caret)
+# Fit lm model using 10-fold CV: model on entire dataset
+sales_cv_model <- train(
+  sales_last_3mon ~ avg_sales + avg_item_price + n_purchases +
+    days_since_last_purch + customer_duration, 
+  data = df_grouped,
+  method = "lm",
+  trControl = trainControl(
+    method = "cv", 
+    number = 10,
+    verboseIter = TRUE
+  )
+)
+
+# Print model to console
+print(sales_cv_model)
+```
+
+RMSE = 9881.195 and Rsquared = 0.4028907
+
+We have a much lower r-squared on the cross-validated model. We also have a much higher RMSE. This is not a good sign! Perhaps some customers are skewing the data in the validation process. We need to look for outliers or high-leverage observations. Will use the broom package to do this. 
+
+```{r Leverage computations from sales_model}
+sales_model %>% 
+  broom::augment() %>%
+  arrange(desc(.hat)) %>% 
+  select(sales_last_3mon, n_purchases, avg_sales, .fitted, .resid, .hat) %>% 
+  head(10)
+
+```
+The leverage scores (.hat column) show 3 observations with high leverage, but it's the first 2 that are causing the problems. This means that the observations are far from the mean of the explanatory variables. 
+
+
+Upon closer inspection of df_grouped, there is a customer with 1 very large purchase (customer_id 16446). The second observation (customer_id 16742) had 1 order with a a very high average price. The third observation (customer_id 14096) has very high number of orders 5000+. We will remove these observations as they are having a big effect on our model and re-model again.
+
+```{r Attempt 2 - 10-fold cross validation}
+
+df_outliers_removed <- df_grouped %>% 
+  filter(customer_id != 16446 && customer_id != 16742 && customer_id != 14096)
+
+library(caret)
+# Fit lm model using 10-fold CV: model on entire dataset
+sales_cv_model <- train(
+  sales_last_3mon ~ avg_sales + avg_item_price + n_purchases +
+    days_since_last_purch + customer_duration, 
+  data = df_outliers_removed,
+  method = "lm",
+  trControl = trainControl(
+    method = "cv", 
+    number = 15,
+    verboseIter = TRUE
+  )
+)
+
+# Print model to console
+print(sales_cv_model)
+```
+Our r-squared actually decreased but so did our RMSE so we improved the accuracy of the model.
+
+```{r Model summary of Cross-Validated Model}
+summary(sales_cv_model)
+```
+
+## Interpretation of the coefficients & learnings from the OLS model:
+
+1.  48% of the variation in CLV can be explained by our independent variables. The remaining variation goes unexplained. The value of CLV would be -137 when all of my variables are 0 which doesn't have a managerial interpretation.
+2.  Our model is significant with the low p-value
+3.  The effect of avg_sales and n_purchases and days_since_last_purch and customer_duration are statistically significant.
+4.  A one unit increase in avg_sales leads to 1 currency (british pounds) increase in CLV.
+5.  For each additional purchase order per customer increases CLV by 11 british pounds.
+6.  The longer the time since the customer's last order (for every day), reduces CLV by 19 british pounds.
+7.  For each additional day we acquire a new customer, we increase CLV by 22 british pounds.
+
+## Customer Lifetime Value (CLV) Modeling with Bayesian Linear Regression
+
+We will next try a Bayesian approach.
+
+A Bayesian analysis answers the question, "Given these data, how likely is the difference?"
+
+We will compare against the classic frequentist OLS model from above.
+
+```{r Bayes LM}
+library(rstanarm)
+
+# Conduct regression
+sales_bayes_model <- df_outliers_removed %>%
+  stan_glm(
+    sales_last_3mon ~ avg_sales + avg_item_price + n_purchases + days_since_last_purch + customer_duration,
+    data = .,
+    seed = 123
+  ) 
+
+# Show summary
+sales_bayes_model %>% summary()
+```
+
+
+
+The Bayes model lends to the same interpretation of our OLS lm for the coefficients are nearly the same. The Rhat's are all decent at 1.0 for each coefficient. The model has converged which is good.
+
+## Final Summary
+
+Key takeaways for CLV modeling and what can we suggest to both the sales and marketing teams:
+1. We can use the CLV to allocate marketing resources between customers to maximize future profits.
+2. We can prevent profitable customers from churning
+
+

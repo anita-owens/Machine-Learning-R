@@ -99,3 +99,7 @@ With this project, I predict customer churn rates and identify major churn facto
 
 
     Next steps: Now that we know which factors lead to churn, we can take steps to reduce the lost revenue. For example, we can integrate the machine learning model with our marketing applications or customer support applications.
+    
+    
+PROJECT 7: Customer Lifetime Value - Can we predict customer sales?
+
