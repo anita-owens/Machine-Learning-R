@@ -1,10 +1,10 @@
 ---
-title: "Customer Lifetime Value (CLV) Modeling with Linear Regression"
+title: "Customer Lifetime Value (CLV) Modeling with Linear Regression - OLS and Bayesian"
 output: html_notebook
 ---
 
 ```{r Dataset}
-browseURL("https://archive.ics.uci.edu/ml/datasets/Online+Retail+II")
+#browseURL("https://archive.ics.uci.edu/ml/datasets/Online+Retail+II")
 ```
 
 Data Set Information:
@@ -145,13 +145,15 @@ head(df_01)
 
 ```{r Rename some columns}
 
-#This will make our lives easier when moving to SQL for data transformation
+#This will make our data manipulation easier
 df_02 <- df_01 %>% 
   rename(
     customer_id = Customer.ID,
     stock_code = StockCode,
     invoice_date = InvoiceDate
   )
+
+names(df_02)
 ```
 
 ## Customer Lifetime Value (CLV) Modeling with Linear Regression (OLS)
@@ -284,7 +286,7 @@ mean(preds, na.rm = TRUE)
 ```
 
 Our predicted sales are 1143.
-Our actual sales for the past 3 month is 1196.
+Our actual sales for the past 3 months is 1196.
 Not too far away from forecasted amount.
 
 
@@ -298,7 +300,7 @@ sales_model %>%
   head(10)
 
 ```
-The leverage scores (.hat column) show 3 observations with high leverage, but it's the first 2 that are causing the problems. This means that the observations are far from the mean of the explanatory variables. 
+The leverage scores (.hat column) show the first 3 observations with highest leverage. This means that the observations are far from the mean of the explanatory variables. 
 
 
 Upon closer inspection of df_grouped, there is a customer with 1 very large purchase (customer_id 16446). The second observation (customer_id 16742) had 1 order with a a very high average price. The third observation (customer_id 14096) has very high number of orders 5000+. We will remove these observations as they are having a big effect on our model and re-model again.
@@ -307,6 +309,12 @@ Upon closer inspection of df_grouped, there is a customer with 1 very large purc
 ```{r Remove outliers}
 df_outliers_removed <- df_grouped %>% 
   filter(customer_id != 16446 && customer_id != 16742 && customer_id != 14096)
+
+head(df_outliers_removed)
+```
+```{r Remove and clean up objects from first model}
+# To clean up the memory
+rm(split, train, test, preds, error)
 ```
 
 
@@ -316,10 +324,18 @@ df_outliers_removed <- df_grouped %>%
 split <- round(nrow(df_outliers_removed) * 0.80)
 
 # Create train
-train <- df_grouped[1:split,]
+train <- df_outliers_removed[1:split,]
 
 # Create test
-test <- df_grouped[(split + 1):nrow(df_outliers_removed),]
+test <- df_outliers_removed[(split + 1):nrow(df_outliers_removed),]
+
+
+#check results
+dim(train)
+dim(train)/dim(df_outliers_removed) #proportions
+
+dim(test)
+dim(test)/dim(df_outliers_removed) # proportions
 ```
 
 ```{r 2nd iteration - We want to run the linear regression model}
@@ -334,8 +350,38 @@ sales_model_02  <- train %>%
 sales_model_02 %>% summary()
 ```
 
-Our r-squared actually did not move that much, but now we get different coefficients
-which does change our interpretations and our forecasts for the CLV.
+Our r-squared actually did not move that much with the outliers removed, but now we get different coefficients which does change our interpretations and our forecasts for the CLV.
+
+
+```{r Run predictions on the new model}
+# Predict on test set
+preds <- predict(sales_model_02, test, type = "response")
+
+# Compute errors
+error <- preds - test$sales_last_3mon
+
+# Calculate RMSE
+sqrt(mean((preds - test$sales_last_3mon)^2))
+```
+
+
+```{r}
+cor(sales_model_02$fitted.values,train$sales_last_3mon) # Computes the correlation between the fitted values and the actual ones
+plot(train$sales_last_3mon,sales_model_02$fitted.values) # Plot the fitted values vs. the actual ones
+
+
+data_mod <- data.frame(Predicted = predict(sales_model_02), 
+                       Observed = df_outliers_removed[c(1:2311),]$sales_last_3mon)
+
+ggplot(data_mod,                                    
+       aes(x = Predicted,
+           y = Observed)) +
+  geom_point() +
+  geom_abline(intercept = 0,
+              slope = 1,
+              color = "red",
+              size = 1)
+```
 
 
 
@@ -374,7 +420,7 @@ sales_bayes_model %>% summary()
 
 
 
-The Bayes model lends to the same interpretation of our OLS lm for the coefficients are nearly the same. The Rhat's are all decent at 1.0 for each coefficient. The model has converged which is good.
+The Bayes model lends to the same interpretation of our OLS lm for the coefficients are nearly the same. The Rhat's are all decent at 1.0 for each coefficient. The model has converged, but just barely.
 
 ## Final Summary
 
