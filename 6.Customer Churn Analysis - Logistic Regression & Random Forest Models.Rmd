@@ -38,14 +38,14 @@ library(ModelMetrics)
 
 
 
-```{r Check wd, echo = FALSE}
+```{r Change and check working directory if needed, echo = FALSE}
 
-setwd("/Users/anitaowens/R_Programming/HI Bootcamp")
-getwd()
+#setwd("/Users/anitaowens/R_Programming/HI Bootcamp")
+#getwd() #check results
 ```
 
 ```{r Load dataset}
-df <- read.csv("~/R_Programming/HI Bootcamp/Telco-Customer-Churn.csv")
+df <- read.csv("~/Documents/GitHub/Machine-Learning-R/Machine-Learning-R/datasets/Telco-Customer-Churn.csv")
 ```
 
 
@@ -70,7 +70,9 @@ str(df)
 
 
 ```{r Establish churn rate baseline - that is what we are interested in}
-#churn rate baseline
+
+
+#churn rate baseline put into its own data
 (churn.base <- df %>% 
   group_by(Churn) %>% 
   count(Churn) %>% 
@@ -532,8 +534,10 @@ df %>%
 
 
 ```{r Recode churn character variable into a numeric variable}
+#check structure of Churn variable which is a character variable
 str(df$Churn)
 
+#Gives the split proportion of not churned vs churn
 (churnRate <- round(prop.table(table(df$Churn)),5))
 (churn_rate_overall <- churnRate[[2]])
 
@@ -541,8 +545,10 @@ str(df$Churn)
 df <- df %>% 
       mutate(Churn = ifelse(Churn == "Yes", 1, 0)) 
 
-#check results
-head(df$Churn)
+# Re-check total and fraction of a churn outcome variable
+df %>%
+summarize(total = n(),
+percent_churn = mean(Churn == 1))
 ```
 
 
