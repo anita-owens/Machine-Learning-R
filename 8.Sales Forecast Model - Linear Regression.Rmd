@@ -1,0 +1,93 @@
+---
+title: "Sales Forecast Model - Linear Regression"
+output: html_notebook
+---
+
+
+```{r Load packages}
+library(tidyverse)
+library(openxlsx)
+```
+
+
+```{r Load file}
+oreos <- read.xlsx("/Users/anitaowens/Documents/Marketing Analytics-Data Driven Techniques with Excel/Excel Files/Chapter 10 Excel Files/Oreos.xlsx", skipEmptyRows = TRUE)
+```
+
+
+```{r How does shelf position influence Oreos sale}
+head(oreos)
+```
+
+
+
+```{r Build Linear Regression Model}
+
+# Sales as explained by height in feet; must specify dataset
+oreo_model_lm <-  lm(Sales ~ factor(Height.in.feet), data = oreos) 
+
+```
+
+
+
+```{r Summarize regression model}
+
+#Print model summary
+oreo_model_lm %>% summary()
+
+```
+
+
+A positive coefficient indicates that as the value of the independent variable increases (height), the mean of the dependent variable (sales) also tends to increase.
+
+At 5 feet sales are 28. Now we interpret 6 and 7 feet in relation to the 5 feet shelf location.
+
+At 6 feet sales increase by 34 units, but at 7 feet sales are only increased by 15 units in relation 5 feet. Overall, 6 feet is better location for our Oreos.
+
+p-values are <.05 for both independent variables
+
+
+How do we write our equation if we want to use this linear model to forecast sales?
+
+Sales = 28.5 + 34*(6 feet) + 15.75*(7 feet)
+
+Luckily, for us we can use R to do the math for us.
+
+```{r Create new dataframe for our forecast}
+
+explan_oreos <- tibble(oreos)
+
+head(explan_oreos)
+```
+
+```{r Predict oreo sales}
+
+#Call predict - vector of predictions
+predict(oreo_model_lm, explan_oreos)
+
+```
+
+
+```{r Create dataframe with our predictions}
+
+#Put predictions inside a data frame
+prediction_oreo <- explan_oreos  %>% 
+  mutate(forecast_sales = predict(oreo_model_lm, explan_oreos))
+
+#Add residuals as a column
+prediction_oreo <- prediction_oreo %>% 
+  mutate(errors = forecast_sales - Sales)
+
+#check results
+head(prediction_oreo)
+```
+
+
+
+```{r Summarize sales data on our forecast}
+prediction_oreo %>% 
+  group_by(Height.in.feet) %>% 
+  summarize(avg_sales = mean(forecast_sales),
+            sum_sales = sum(forecast_sales))
+```
+
