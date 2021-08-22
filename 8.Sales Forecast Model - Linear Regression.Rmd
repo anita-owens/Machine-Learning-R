@@ -11,7 +11,7 @@ library(openxlsx)
 
 
 ```{r Load file}
-oreos <- read.xlsx("/Users/anitaowens/Documents/Marketing Analytics-Data Driven Techniques with Excel/Excel Files/Chapter 10 Excel Files/Oreos.xlsx", skipEmptyRows = TRUE)
+oreos <- read.xlsx("~/Documents/GitHub/Machine-Learning-R/Machine-Learning-R/datasets/Oreos.xlsx", skipEmptyRows = TRUE)
 ```
 
 
@@ -55,9 +55,10 @@ Luckily, for us we can use R to do the math for us.
 
 ```{r Create new dataframe for our forecast}
 
-explan_oreos <- tibble(oreos)
-
-head(explan_oreos)
+  explan_oreos <- tibble(oreos)
+  
+  head(explan_oreos)
+  
 ```
 
 ```{r Predict oreo sales}
