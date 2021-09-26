@@ -110,7 +110,7 @@ df %>%
   summarize_all(funs(min, max))
 
 #Convert to date type - this works swimmingly!
-df$InvoiceDate <- mdy_hm(df$InvoiceDate)
+df$InvoiceDate <- lubridate::mdy_hm(df$InvoiceDate)
 
 #check results
 str(df$InvoiceDate)
@@ -339,10 +339,10 @@ dim(test)/dim(df_outliers_removed) # proportions
 ```
 
 ```{r 2nd iteration - We want to run the linear regression model}
-# Conduct regression on training set
+# Conduct regression on training set - we will remove insignificant variable avg_item_price 
 sales_model_02  <- train %>%
   lm(
-    sales_last_3mon ~ avg_sales + avg_item_price + n_purchases + days_since_last_purch + customer_duration,  # "as a function of"
+    sales_last_3mon ~ avg_sales + n_purchases + days_since_last_purch + customer_duration,  # "as a function of"
     data = .
   ) 
 
@@ -363,10 +363,13 @@ error <- preds - test$sales_last_3mon
 # Calculate RMSE
 sqrt(mean((preds - test$sales_last_3mon)^2))
 ```
+This is great! We lowered the RMSE which provides better forecasts.
 
 
 ```{r}
 cor(sales_model_02$fitted.values,train$sales_last_3mon) # Computes the correlation between the fitted values and the actual ones
+
+
 plot(train$sales_last_3mon,sales_model_02$fitted.values) # Plot the fitted values vs. the actual ones
 
 
@@ -388,13 +391,13 @@ ggplot(data_mod,
 
 ## Interpretation of the coefficients & learnings from the OLS model:
 
-1.  71% of the variation in CLV can be explained by our independent variables. The remaining variation goes unexplained. The value of CLV would be -144 when all of my variables are 0 which doesn't have a managerial interpretation.
+1.  71% of the variation in CLV can be explained by our independent variables. The remaining variation goes unexplained. The value of CLV would be -121 when all of my variables are 0 which doesn't have a managerial interpretation.
 2.  Our model is significant with the low p-value
 3.  The effect of avg_sales and n_purchases and days_since_last_purch and customer_duration are statistically significant.
 4.  A one unit increase in avg_sales leads to 1 currency (british pounds) increase in CLV.
 5.  For each additional purchase order per customer increases CLV by 13 british pounds.
 6.  The longer the time since the customer's last order (for every day), reduces CLV by 12 british pounds.
-7.  For each additional day we acquire a new customer, we increase CLV by 15 british pounds.
+7.  For each additional day when we acquire a new customer, we increase CLV by 15 british pounds.
 
 ## Customer Lifetime Value (CLV) Modeling with Bayesian Linear Regression
 
@@ -410,7 +413,7 @@ library(rstanarm)
 # Conduct regression
 sales_bayes_model <- train %>%
   stan_glm(
-    sales_last_3mon ~ avg_sales + avg_item_price + n_purchases + days_since_last_purch + customer_duration,
+    sales_last_3mon ~ avg_sales + n_purchases + days_since_last_purch + customer_duration,
     data = .,
     seed = 123
   ) 
