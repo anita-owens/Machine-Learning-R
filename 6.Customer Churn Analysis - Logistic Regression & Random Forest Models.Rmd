@@ -1,8 +1,8 @@
 ---
 title: "Telco Customer Churn"
 output:
-  pdf_document: default
   html_notebook: default
+  pdf_document: default
 ---
 ## Step 1: Get data
 
@@ -243,7 +243,7 @@ ggplot(data = df, aes(x = Contract, y = tenure, fill = Contract))+geom_boxplot()
 ggplot(data = df, aes(x = factor(Churn), y = tenure, fill = Churn)) +geom_boxplot()
 #High churn for those with lower tenures
 
-ggplot(data = df, aes(x = factor(Churn), y = MonthlyCharges, fill = Churn))+geom_boxplot()
+ggplot(data = df, aes(x = factor(Churn), y = MonthlyCharges, color = factor(Churn)))+geom_boxplot() + theme_gdocs() + scale_color_gdocs() + ggtitle("Monthly charges by churn status")
 #Higher churn for those with higher than avg monthly charges
 
 ggplot(data = df, aes(x = factor(Churn), y = TotalCharges, fill = Churn))+geom_boxplot()
@@ -275,13 +275,7 @@ ggplot(data = df, aes(x=Contract, fill = factor(Churn)))+ geom_bar(position = "f
 #We have significantly higher churn than for those on month-to-month contracts
 
 
-ggplot(data = df, aes(x=factor(SeniorCitizen), fill = factor(Churn)))+ geom_bar(position = "fill") + scale_fill_manual(values = c("#1b9e77", "#d95f02")) + theme(
-    plot.background = element_blank(),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_blank(),
-    plot.title = element_text(hjust = 0.5),
-    text=element_text(size=14,  family="Helvetica")) + labs(x = " ", title = "Is a senior citizen")
+ggplot(data = df, aes(x=factor(SeniorCitizen), fill = factor(Churn)))+ geom_bar(position = "fill") + scale_fill_manual(values = c("#669DEC", "#DB6557"), name = "Churn status")  + theme_minimal() + theme(plot.title = element_text(hjust = 0.5)) + labs(x = "0 = non-senior citizen, 1 = senior citizen", y = "churn %", title = "Higher churn for senior citizens") + theme_gdocs() + scale_color_gdocs()
 #Higher churn for Senior Citizens
 
 
@@ -364,11 +358,15 @@ ggplot(data = df, aes(x=StreamingMovies, fill = factor(Churn))) + geom_bar(posit
 
 ```{r Multivariate Analysis - Scatterplots and log transformation}
 
-ggplot(data = df, aes(x=MonthlyCharges, y=tenure, color=factor(Churn))) + geom_point(alpha = 0.5) + geom_smooth(method=lm) + labs(title = " ")
+ggplot(data = df, aes(x=MonthlyCharges, y=tenure, color=factor(Churn))) + geom_point(alpha = 0.5) + geom_smooth(method=lm) + labs(title = "Monthly Charges by tenure and churn status") + theme_gdocs() + scale_color_gdocs()
 #lots of vertical lines - no horizontal patterns
 #suggests that monthly charges has some association with churn as the churned customers are heavily represented on the higher end of the monthly charges
 #there is most likely a higher likelihood of churn once you reach a certain point on the monthly fee
 
+#Take a small sample
+small_df <- df %>% sample_n(1000, replace = FALSE)
+
+ggplot(data = small_df, aes(x=MonthlyCharges, y=tenure, color=factor(Churn))) + geom_point(alpha = 0.4) + geom_smooth(method=lm) + labs(title = "Monthly charges by tenure and churn status", subtitle = "(random sample of 1000 customers)") + theme_gdocs() + scale_color_gdocs() + theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5)) 
 
 #believe that total charges can also be a proxy for tenure-hence the triangle looking scatterplot
 ggplot(data = df, aes(x=TotalCharges, y=tenure, color=factor(Churn))) + geom_point(alpha = 0.5) +geom_smooth(method=lm) + labs(title = " ")
