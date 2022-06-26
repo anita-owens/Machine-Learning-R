@@ -193,12 +193,12 @@ plot_grid(bar1, bar2, bar3, bar4, labels = "AUTO")
 #####Univariate Analysis: Boxplots for important independent numeric variables  ######
 
 # page_likes on y axis
-ggbi1 <- ggplot(data = fb_data, aes(x = Type, y = page_likes, fill = Type))+geom_boxplot() + stat_summary(fun=mean, geom="point", shape=20, size=8, color="red", fill="red")
-ggbi2 <- ggplot(data = fb_data, aes(x = factor(Category), y = page_likes, fill = Category))+geom_boxplot()
-ggbi3 <- ggplot(data = fb_data, aes(x = factor(Post.Month), y = page_likes))+geom_boxplot()
-ggbi4 <- ggplot(data = fb_data, aes(x = factor(Post.Weekday), y = page_likes))+geom_boxplot()
-ggbi5 <- ggplot(data = fb_data, aes(x = factor(Post.Hour), y = page_likes))+geom_boxplot()
-ggbi6 <- ggplot(data = fb_data, aes(x = factor(Paid), y = page_likes, fill = factor(Paid)))+geom_boxplot()
+ggbi1 <- ggplot(data = fb_data, aes(x = Type, y = page_likes, fill = Type))+geom_boxplot() + stat_summary(fun=mean, geom="point", shape=20, size=8, color="red", fill="red")+theme_minimal()
+ggbi2 <- ggplot(data = fb_data, aes(x = factor(Category), y = page_likes, fill = Category))+geom_boxplot()+theme_minimal()
+ggbi3 <- ggplot(data = fb_data, aes(x = factor(Post.Month), y = page_likes))+geom_boxplot()+theme_minimal()
+ggbi4 <- ggplot(data = fb_data, aes(x = factor(Post.Weekday), y = page_likes))+geom_boxplot()+theme_minimal()
+ggbi5 <- ggplot(data = fb_data, aes(x = factor(Post.Hour), y = page_likes))+geom_boxplot()+theme_minimal()
+ggbi6 <- ggplot(data = fb_data, aes(x = factor(Paid), y = page_likes, fill = factor(Paid)))+geom_boxplot()+theme_minimal()
 
 plot_grid(ggbi1, ggbi2, ggbi3, ggbi4, labels = "AUTO")
 plot_grid(ggbi5, ggbi6, labels = "AUTO")
@@ -860,3 +860,8 @@ table(fb_data_hc_segment, kmeans_model_8clus$cluster)
 #the post lands on is important. Also that
 #photos tend to dominate the type of post that helps
 #us reach our branding goals.
+
+#References:
+
+#\[1\]. Chapman, C. and McDonnell Feit, E., (2015). R for marketing
+#research and analytics. Cham: Springer, pp.47-59, 162--191.
