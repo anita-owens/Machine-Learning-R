@@ -4,7 +4,7 @@
 
 This repo contains projects related to marketing and business analytics problems using the R Programming language. Machine Learning can significantly improve marketing performance.
 
-**PROJECT 1:** [MARKETING CAMPAIGN OPTIMIZATION- Can we identify the right customers to target?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/1.Predict%20Bank%20Mktg%20Campaign%20Response-Logistic%20Regression%20%26%20Decision%20Tree%20Models.R)
+**PROJECT 1:** [MARKETING CAMPAIGN OPTIMIZATION - Can we identify the right customers to target?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/1.Predict%20Bank%20Mktg%20Campaign%20Response-Logistic%20Regression%20%26%20Decision%20Tree%20Models.R)
 
 The goal of the first project is to improve campaign marketing response rate for the bank. Marketing department needs to understand what is important. How can we allocate resources to those customers who are more likely to respond. This is a classic binary classification problem. We have customers who converted or did not convert.
 
@@ -28,7 +28,7 @@ Here is the profile I would send to marketing.
 
 ------------------------------------------------------------------------
 
-**PROJECT 2:** :red_envelope: [MARKETING CAMPAIGN OPTIMIZATION - What do customers want?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/2.Predict%20Magazine%20Subscription%20Behavior%20-%20Logistic%20Regression.R)
+**PROJECT 2:** :crystal_ball: [MARKETING CAMPAIGN OPTIMIZATION - What do customers want?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/2.Predict%20Magazine%20Subscription%20Behavior%20-%20Logistic%20Regression.R)
 
 We have a dataset of subscribers who subscribed to a magazine or not. Can we predict which customers are more likely to subscribe? The goal is to determine which customers are most likely to respond positively to our offer. This is a simple dataset with few variables and is a good dataset to practice regression modeling. By using machine learning to identify quality customer characteristics, we can save costs and improve customer acquisition with increased ROI.
 
@@ -53,7 +53,7 @@ The goal of project three is to analyze the results of an experiment. A chain of
 
 ------------------------------------------------------------------------
 
-**PROJECT 4:** [PREDICT ONLINE SHOPPING BEHAVIOR - Who is most likely to convert?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/4.Predict%20Online%20Shoppers%20Intent%20-%20Logistic%20Regression.R)
+**PROJECT 4:** :shopping_cart: [PREDICT ONLINE SHOPPING BEHAVIOR - Who is most likely to convert?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/4.Predict%20Online%20Shoppers%20Intent%20-%20Logistic%20Regression.R)
 
 The goal is to identify what characteristics makes a converting customer? What online shopping behaviors exist so we can improve marketing (targeting and customer acquisition) and product (how can we improve our offerings or the customer experience?)
 
@@ -72,7 +72,7 @@ The goal is to identify what characteristics makes a converting customer? What o
 
 ------------------------------------------------------------------------
 
-**PROJECT 5:** [FACEBOOK PERFORMANCE - How do we engage with potential customers on Facebook?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/5.Facebook%20Performance%20-%20Clustering.R)
+**PROJECT 5:** :computer: [FACEBOOK PERFORMANCE - How do we engage with potential customers on Facebook?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/5.Facebook%20Performance%20-%20Clustering.R)
 
 The project task is to analyze posts published to the Facebook page of a renowned cosmetics brand. The goal is to identify which posts led to the most customer engagement. Here, I use multiple cluster algorithms (k-means, hierarchical and m-clust) to gather insights into post performance. Creating different tactics for different customer segments usually improves overall marketing ROI.
 
@@ -82,7 +82,7 @@ The project task is to analyze posts published to the Facebook page of a renowne
 
 ------------------------------------------------------------------------
 
-**PROJECT 6:** [CUSTOMER CHURN - Why do customers churn and what can we do about it?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/6.Customer%20Churn%20Analysis%20-%20Logistic%20Regression%20%26%20Random%20Forest%20Models.Rmd)
+**PROJECT 6:** :money_with_wings: [CUSTOMER CHURN - Why do customers churn and what can we do about it?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/6.Customer%20Churn%20Analysis%20-%20Logistic%20Regression%20%26%20Random%20Forest%20Models.Rmd)
 
 Churn definition: A measure of when a customer stops being a customer.
 
