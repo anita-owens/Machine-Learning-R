@@ -2,6 +2,8 @@
 
 ## :dart: Machine Learning in R
 
+#machine-learning
+
 This repo contains projects related to marketing and business analytics problems using the R Programming language. Machine Learning can significantly improve marketing performance.
 
 **PROJECT 1:** 📊 [MARKETING CAMPAIGN OPTIMIZATION - Can we identify the right customers to target?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/1.Predict%20Bank%20Mktg%20Campaign%20Response-Logistic%20Regression%20%26%20Decision%20Tree%20Models.R)
@@ -24,7 +26,7 @@ Here is the profile I would send to marketing.
       2. has mortgage loan
       
       
-      KEY INSIGHT: The bank should limit the number of contacts it has with  a customer. What's most likely                      happening is that customers may ignore communication from the bank if a customers gets too many. The bank should stop over-exposing customers to it's marketing communication.
+      KEY INSIGHT: The bank should limit the number of contacts it has with a customer. What's most likely                  happening is that customers may ignore communication from the bank if a customers gets too many. The bank should stop over-exposing customers to it's marketing communication.
 
 ------------------------------------------------------------------------
 
@@ -36,7 +38,7 @@ We have a dataset of subscribers who subscribed to a magazine or not. Can we pre
 
     1. We can safely say that the younger the customer (less than 33 years old),
     the more likely to subscribe (median age == 40).
-    2. Women are more likely to subscribe then men. Let's take a look at the creatives to figure out why.          Perhaps there is some cost savings by excluding older segments from marketing efforts in order to gain       more subscribers.
+    2. Women are more likely to subscribe then men. Let's take a look at the creatives to figure out why. Perhaps there is some cost savings by excluding older segments from marketing efforts in order to gain more subscribers.
 
 ------------------------------------------------------------------------
 
@@ -77,14 +79,14 @@ The goal is to identify what characteristics makes a converting customer? What o
 The project task is to analyze posts published to the Facebook page of a renowned cosmetics brand. The goal is to identify which posts led to the most customer engagement. Here, I use multiple cluster algorithms (k-means, hierarchical and m-clust) to gather insights into post performance. Creating different tactics for different customer segments usually improves overall marketing ROI.
 
     The results of the data analysis and statistical modeling indicates that:
-      1. Photos: Posts with photos offered the best ROI in terms of reach. It's an unpaid segment and                 indicates that posting photos goes a long way in engaging users with our Facebook page.
-      2. Day of Week: Another important insight is posting on the right day of the week to optimize                   engagement goals.
+      1. Photos: Posts with photos offered the best ROI in terms of reach. It's an unpaid segment and indicates that posting photos goes a long way in engaging users with our Facebook page.
+      2. Day of Week: Another important insight is posting on the right day of the week to optimize engagement goals.
 
 ------------------------------------------------------------------------
 
 **PROJECT 6:** :money_with_wings: [CUSTOMER CHURN - Why do customers churn and what can we do about it?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/6.Customer%20Churn%20Analysis%20-%20Logistic%20Regression%20%26%20Random%20Forest%20Models.Rmd)
 
-Churn definition: A measure of when a customer stops being a customer.
+**Churn definition: A measure of when a customer stops being a customer.**
 
 It costs more money to acquire new customers than it is to keep the customers you already have. Successful companies know this and do what is needed to make sure new customer acquisition exceeds churn. A robust retention program is what it takes.
 
@@ -119,4 +121,8 @@ This project outlines how to use R to calculate customer lifetime value. In othe
 
 ------------------------------------------------------------------------
 
-**PROJECT 8:** 💰 Sales Forecast Model - Linear Regression
+**PROJECT 8:** 💰[Sales Forecast Model - Linear Regression](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/8.Sales%20Forecast%20Model%20-%20Linear%20Regression.Rmd)
+
+[How to build a simple sales forecast model in R](https://medium.com/geekculture/how-to-build-a-sales-forecast-in-r-dafabb03a076)
+
+This project outlines how to create a forecast model based on sales data.
