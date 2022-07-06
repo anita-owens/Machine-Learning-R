@@ -4,7 +4,7 @@
 
 This repo contains projects related to marketing and business analytics problems using the R Programming language. Machine Learning can significantly improve marketing performance.
 
-**PROJECT 1:** [MARKETING CAMPAIGN OPTIMIZATION - Can we identify the right customers to target?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/1.Predict%20Bank%20Mktg%20Campaign%20Response-Logistic%20Regression%20%26%20Decision%20Tree%20Models.R)
+**PROJECT 1:** 📊 [MARKETING CAMPAIGN OPTIMIZATION - Can we identify the right customers to target?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/1.Predict%20Bank%20Mktg%20Campaign%20Response-Logistic%20Regression%20%26%20Decision%20Tree%20Models.R)
 
 The goal of the first project is to improve campaign marketing response rate for the bank. Marketing department needs to understand what is important. How can we allocate resources to those customers who are more likely to respond. This is a classic binary classification problem. We have customers who converted or did not convert.
 
@@ -46,14 +46,14 @@ The goal of project three is to analyze the results of an experiment. A chain of
 
     File structure:
     1.  File 3A is an R script with an ANOVA analysis of the experiment results.
-    2.  File 3B is a Markdown document with an ANOVA analysis of the experiment results plus all post-hoc            tests.
+    2.  File 3B is a Markdown document with an ANOVA analysis of the experiment results plus all post-hoc tests.
 
     Recommendations to marketing and sales team: 
-    - Let's run again with just promotion 1 & 3 to see if we can get a significant result. The test should         not take as long to run as we only have 2 groups to compare so we could see significant results quite        fast.
+    - Let's run again with just promotion 1 & 3 to see if we can get a significant result. The test should not take as long to run as we only have 2 groups to compare so we could see significant results quite fast. If this is not feasible, then we can inform marketing of the directional result of the experiment so that they can improve planning for the next promotion (e.g. a focus only on 1 or 2 promotions with a proper control group for comparison).
 
 ------------------------------------------------------------------------
 
-**PROJECT 4:** :shopping_cart: [PREDICT ONLINE SHOPPING BEHAVIOR - Who is most likely to convert?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/4.Predict%20Online%20Shoppers%20Intent%20-%20Logistic%20Regression.R)
+**PROJECT 4:** :🛒 🛍️ [PREDICT ONLINE SHOPPING BEHAVIOR - Who is most likely to convert?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/4.Predict%20Online%20Shoppers%20Intent%20-%20Logistic%20Regression.R)
 
 The goal is to identify what characteristics makes a converting customer? What online shopping behaviors exist so we can improve marketing (targeting and customer acquisition) and product (how can we improve our offerings or the customer experience?)
 
@@ -108,11 +108,15 @@ With this project, I predict customer churn rates and identify major churn facto
 
 ------------------------------------------------------------------------
 
-**PROJECT 7:** :moneybag: [Customer Lifetime Value - Can we predict customer sales?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/7.%20Customer%20Lifetime%20Value%20Modeling%20with%20OLS%20and%20Bayesian%20Linear%20Regression.Rmd)
+**PROJECT 7:** 💵: [Customer Lifetime Value - How much is each customer worth?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/7.%20Customer%20Lifetime%20Value%20Modeling%20with%20OLS%20and%20Bayesian%20Linear%20Regression.Rmd)
 
-
+This project outlines how to use R to calculate customer lifetime value. In other words, how much us each customer worth?
 
 | Statistical methods used:                     |
 |-----------------------------------------------|
 | Ordinary least squares (OLS) regression model |
 | Bayesian linear regression                    |
+
+------------------------------------------------------------------------
+
+**PROJECT 8:** 💰 Sales Forecast Model - Linear Regression
