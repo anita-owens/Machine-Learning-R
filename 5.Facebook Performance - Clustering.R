@@ -864,4 +864,4 @@ table(fb_data_hc_segment, kmeans_model_8clus$cluster)
 #References:
 
 #\[1\]. Chapman, C. and McDonnell Feit, E., (2015). R for marketing
-#research and analytics. Cham: Springer, pp.47-59, 162--191.
+#research and analytics. Cham: Springer, pp.47-59, 162-191.

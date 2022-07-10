@@ -1,6 +1,6 @@
 # Machine-Learning
 
-## :dart: Machine Learning in R
+## :dart: Machine Learning in R Introduction
 
 #machine-learning
 
@@ -12,7 +12,7 @@ The goal of the first project is to improve campaign marketing response rate for
 
 With this project, I predict marketing response rates through logistic regression and decision trees. With the output of this model, marketing gets a profile of customers who are similar to those who successfully converted from past marketing campaigns.
 
-Here is the profile I would send to marketing.
+Here is the profile I would send to marketing:
 
     Marketing should contact customers with these characteristics:
       1. marital status - single
@@ -66,21 +66,32 @@ The goal is to identify what characteristics makes a converting customer? What o
 
       What's not important?
        - Special day doesn't appear to make much of a difference
-       - We presumed weekend makes a difference, but it doesn't.
+       - We presumed weekend makes a difference (customers do more shopping on the weekend), but it doesn't.
 
       What can we do with this information? In other words, what do we tell product & sales teams?
-      - Focus on optimizing product pages. Product pages usually have enough volume to do A/B testing (photos, copy, USP's etc.)
-      - Email marketing is important here. When we send emails to existing customers we should make sure the links point to a product page of interest.
+      - Focus on optimizing product pages. Product pages usually have enough volume to do A/B testing. Here we can test product photos, copy, and USP's etc.)
+      - Email marketing is important here. When we send emails to existing customers we should make sure the links point to the product page of interest. The email needs to keep its promise and the customer should land on the right product page.
 
 ------------------------------------------------------------------------
 
 ## **PROJECT 5:** :computer: [FACEBOOK PERFORMANCE - How do we engage with potential customers on Facebook?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/5.Facebook%20Performance%20-%20Clustering.R)
 
-The project task is to analyze posts published to the Facebook page of a renowned cosmetics brand. The goal is to identify which posts led to the most customer engagement. Here, I use multiple cluster algorithms (k-means, hierarchical and m-clust) to gather insights into post performance. Creating different tactics for different customer segments usually improves overall marketing ROI.
+The project task is to analyze posts published to the Facebook page of a renowned cosmetics brand. The goal is to identify which posts led to the most customer engagement. Here, I use multiple cluster algorithms (k-means, hierarchical and Mclust) to gather insights into post performance.
+
+This type of analysis can be used to answer the following questions:
+
+1.  Are there obvious differences in group means? Hypothesis testing to help us understand the segments.
+
+2.  Are the groups differentiated enough to tell us a story?
+
+3.  Do we see immediately odd results (e.g. a mean equal to the value of one data level?)
+
+Creating different tactics for different customer segments usually improves overall marketing ROI.
 
     The results of the data analysis and statistical modeling indicates that:
-      1. Photos: Posts with photos offered the best ROI in terms of reach. It's an unpaid segment and indicates that posting photos goes a long way in engaging users with our Facebook page.
-      2. Day of Week: Another important insight is posting on the right day of the week to optimize engagement goals.
+      1. Photos: Posts with photos offered the best ROI in terms of reach. It's an unpaid segment and indicates that posting photos goes a long way in engaging users with our Facebook page. There is no difference in page_likes between paid or unpaid segments
+      2. Day of Week: Another important insight is posting on the right day of the week to optimize engagement goals. Page likes are consistent across days of week with more variability on days 5 & 6.
+      3. Videos: Videos and status gets better page likes than links and photos.
 
 ------------------------------------------------------------------------
 
@@ -95,7 +106,7 @@ My personal favorite project and a common business task is to identify what fact
 With this project, I predict customer churn rates and identify major churn factors through logistic regression and random forest modeling. With the output of these models, I was able to identify core insights for business stakeholders.
 
     What causes churn?
-         1. Most significant factor related to churn is one of our product key products.
+         1. Most significant factor related to churn is the use of our key product (fiber optic).
           - Fiber optic service is a pain point for customers, but why? Difficult to set up? Quality
             concerns? Can’t stream Netflix? etc. Data suggests there is a significant problem with the                   service.
          2. Contract type is 2nd most significant factor leading to churn. 
@@ -112,7 +123,7 @@ With this project, I predict customer churn rates and identify major churn facto
 
 ## **PROJECT 7:** 💵: [Customer Lifetime Value - How much is each customer worth?](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/7.%20Customer%20Lifetime%20Value%20Modeling%20with%20OLS%20and%20Bayesian%20Linear%20Regression.Rmd)
 
-This project outlines how to use R to calculate customer lifetime value. In other words, how much us each customer worth?
+This project outlines how to use R to calculate customer lifetime value. In other words, how much is each customer worth?
 
 | Statistical methods used:                     |
 |-----------------------------------------------|
@@ -123,6 +134,6 @@ This project outlines how to use R to calculate customer lifetime value. In othe
 
 ## **PROJECT 8:** 💰[Sales Forecast Model - Linear Regression](https://github.com/bonheurgirl/Machine-Learning-R/blob/master/8.Sales%20Forecast%20Model%20-%20Linear%20Regression.Rmd)
 
-[How to build a simple sales forecast model in R](https://medium.com/geekculture/how-to-build-a-sales-forecast-in-r-dafabb03a076)
+This project outlines how to create a forecast model based on sales data as published on Medium.
 
-This project outlines how to create a forecast model based on sales data.
+Medium article: [How to build a simple sales forecast model in R](https://medium.com/geekculture/how-to-build-a-sales-forecast-in-r-dafabb03a076)

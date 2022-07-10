@@ -48,11 +48,11 @@ pacman::p_load(pacman,
 
 ```{r Import dataset}
 #import file
-dataset_2009 <- read.csv("~/Documents/GitHub/Machine-Learning-R/Machine-Learning-R/datasets/online_retail_2009.csv")
+dataset_2009 <- read.csv("datasets/online_retail_2009.csv")
 
 head(dataset_2009) #check results
 
-dataset_2010 <- read.csv("~/Documents/GitHub/Machine-Learning-R/Machine-Learning-R/datasets/online_retail_2010.csv")
+dataset_2010 <- read.csv("datasets/online_retail_2010.csv")
 head(dataset_2010) #check results
 ```
 
@@ -143,7 +143,6 @@ head(df_01)
 ```
 
 ```{r Rename some columns}
-
 #This will make our data manipulation easier
 df_02 <- df_01 %>% 
   rename(
@@ -258,7 +257,6 @@ sales_model %>% summary()
 We have quite a few significant variables. A decent r-squared and low-p-value for the model.
 
 ```{r Create the predictions}
-
 # Predict on test set
 preds <- predict(sales_model, test, type = "response")
 
