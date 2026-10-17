@@ -72,7 +72,7 @@ browseURL("https://archive.ics.uci.edu/ml/datasets/Online+Shoppers+Purchasing+In
 ##########Import Data###################
 
 #import file
-dataset <- read.csv("~/Documents/GitHub/Machine-Learning-R/Machine-Learning-R/datasets/online_shoppers_intention.csv", sep = ',')
+dataset <- read.csv(here::here("datasets", "online_shoppers_intention.csv"), sep = ',')
 
 head(dataset) #check results
 
