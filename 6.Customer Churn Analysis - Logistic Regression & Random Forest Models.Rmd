@@ -45,7 +45,7 @@ library(ModelMetrics)
 ```
 
 ```{r Load dataset}
-df <- read.csv("~/Documents/GitHub/Machine-Learning-R/Machine-Learning-R/datasets/Telco-Customer-Churn.csv")
+df <- read.csv(here::here("datasets", "Telco-Customer-Churn.csv"))
 ```
 
 
@@ -265,7 +265,7 @@ ggplot(data = df, aes(x=gender, fill = factor(Churn))) + geom_bar(position = "fi
 #no difference by gender
 
 
-ggplot(data = df, aes(x=Contract, fill = factor(Churn)))+ geom_bar(position = "fill") + scale_fill_mconfuanual(values = c("#1b9e77", "#d95f02")) + theme(
+ggplot(data = df, aes(x=Contract, fill = factor(Churn)))+ geom_bar(position = "fill") + scale_fill_manual(values = c("#1b9e77", "#d95f02")) + theme(
     plot.background = element_blank(),
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
@@ -724,7 +724,7 @@ Now we have to decide whether we should do some data modeling.
 
 ```{r Get data ready for modeling}
 #let's use a fresh dataset
-df_raw <- read.csv("~/Documents/GitHub/Machine-Learning-R/Machine-Learning-R/datasets/Telco-Customer-Churn.csv")
+df_raw <- read.csv(here::here("datasets", "Telco-Customer-Churn.csv"))
 
 #str(df_raw) #check results
 
@@ -1072,7 +1072,7 @@ Compare test set accuracy to OOB accuracy
 
 
 
-```{r Evaluate test set AUC - Area under the curve for first RF model}
+```{r Evaluate test set AUC - Area under the curve for first RF model,eval=FALSE}
 
 # Generate predictions on the test set
 pred <-predict(object = model_01_rf,
@@ -1141,17 +1141,69 @@ model_03_rf_final <- randomForest(formula = Churn ~ .,
                                   mtry = 4,
                                   nodesize = 7,
                                   sampsize = 3445.4,
-                             data = train_data, importance = TRUE, keep.forest=TRUE)
-                             
+                                  data = train_data, importance = TRUE, keep.forest = TRUE)
+
 # Print the model output
 print(model_03_rf_final)
 
-#variable importance
-importance(model_03_rf_final)
+# Variable importance as a tidy table
+imp <- importance(model_03_rf_final) %>%
+  as.data.frame() %>%
+  rownames_to_column("variable") %>%
+  select(variable, MeanDecreaseAccuracy, MeanDecreaseGini)
 
-#variable importance plot
-varImpPlot(model_03_rf_final, main="Variable importance on the tuned model")
+imp %>% arrange(desc(MeanDecreaseAccuracy))
+
+# Order variables by accuracy so both panels line up
+var_order <- imp %>% arrange(MeanDecreaseAccuracy) %>% pull(variable)
+
+imp_long <- imp %>%
+  pivot_longer(-variable, names_to = "measure", values_to = "value") %>%
+  mutate(variable = factor(variable, levels = var_order),
+         measure  = dplyr::recode(measure,
+                                  MeanDecreaseAccuracy = "Mean decrease in accuracy",
+                                  MeanDecreaseGini     = "Mean decrease in Gini impurity"))
+
+oob <- model_03_rf_final$err.rate[model_03_rf_final$ntree, "OOB"]
+
+# Variable importance plot
+ggplot(imp_long, aes(x = value, y = variable)) +
+  geom_segment(aes(x = 0, xend = value, yend = variable),
+               colour = "#d6d5d0", linewidth = 0.7) +
+  geom_point(colour = "#2a78d6", size = 3) +
+  facet_wrap(~ measure, scales = "free_x") +
+  labs(title    = "What drives customer churn?",
+       subtitle = "Variable importance in the tuned random forest, ordered by mean decrease in accuracy",
+       x = NULL, y = NULL,
+       caption  = sprintf("Model 3: %d trees, mtry = 4, nodesize = 7  ·  OOB error rate %.1f%%",
+                          model_03_rf_final$ntree, oob * 100)) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title.position = "plot",
+        plot.title     = element_text(face = "bold", size = 15),
+        plot.subtitle  = element_text(colour = "#52514e", margin = ggplot2::margin(b = 10)),
+        plot.caption   = element_text(colour = "#52514e", hjust = 0),
+        strip.text     = element_text(face = "bold", hjust = 0, size = 11),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor   = element_blank(),
+        panel.spacing.x    = unit(1.5, "lines"),
+        axis.text.y        = element_text(colour = "#0b0b0b"))
 ```
+
+How to read them together: look for agreement first, then for disagreement.
+
+Both panels agree on the top four: tenure, TotalCharges, MonthlyCharges and Contract. That’s your headline: how long someone has been a customer, what they pay, and their contract type drive churn.
+
+PaymentMethod is the clear disagreement. It ranks fifth on Gini but only tenth on accuracy. It has four levels, so it gives the trees lots of split options and looks better on Gini than it really is. Trust the left panel here.
+
+The bottom group (Partner, Dependents, PhoneService, gender) is weak on both measures and could be dropped without much loss.
+
+
+Two caveats when you present this:
+
+Importance tells you how much a variable matters, not which direction. The chart doesn’t say whether short tenure raises or lowers churn. Your earlier churn-rate-by-contract plots show that, or partial dependence plots would.
+Tenure and TotalCharges are highly correlated, since total charges are roughly tenure × monthly charges. When two variables carry the same information, the model splits the credit between them. Each one’s importance is lower than it would be on its own, and permutation can understate both, because the model falls back on the other when one is shuffled.
+
+The caption’s OOB error of 19.6% means the model classifies about 80% of customers correctly on data it didn’t train on. Compare that with your churn baseline: if about 26% of customers churn, a model that always says “no churn” would already be about 74% accurate. This model beats that baseline, but not by a huge margin.
 
 ```{r Partial dependence plots for the most important variables, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 # Let’s check partial dependence plots for a few variables:
@@ -1171,7 +1223,7 @@ par(op)
 
 
 
-```{r Evaluate test set AUC - Area under the curve for best tuned model - RF3}
+```{r Evaluate test set AUC - Area under the curve for best tuned model - RF3, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 # Generate predictions on the test set
 pred <-predict(object = model_03_rf_final,
             newdata = test_data,
@@ -1182,7 +1234,7 @@ round(auc(actual = ifelse(test_data$Churn == "1", 1, 0),
 ```
 
 
-```{r ROC Curve for RF Model - Best Model}
+```{r ROC Curve for RF Model - Best Model, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 require(pROC)
 rf.roc<-roc(train_data$Churn,model_03_rf_final$votes[,2])
 plot(rf.roc)
@@ -1221,7 +1273,7 @@ main = "Classification tree on our churn data")
 ```{r Compare tree models with a different splitting criterion}
 # Train a gini-based model
 tree_mod_02<- rpart(formula = Churn ~., 
-                      data = train_data_tree,
+                      data = train_data,
                        method = "class",
                        parms = list(split = "gini"))
 
@@ -1230,7 +1282,7 @@ rpart.plot(x = tree_mod_02, yesno = 2, type = 0, extra = 0)
 
 # Train an information-based model
 tree_mod_03<- rpart(formula = Churn ~., 
-                      data = train_data_tree, 
+                      data = train_data, 
                        method = "class",
                        parms = list(split = "information"))
 
@@ -1239,12 +1291,12 @@ rpart.plot(x = tree_mod_03, yesno = 2, type = 5, extra = 6)
 
 # Generate predictions on the test set using the gini model
 pred1 <- predict(object = tree_mod_02, 
-             newdata = test_data_tree,
+             newdata = test_data,
              type = "class")    
 
 # Generate predictions on the test set using the information model
 pred2 <- predict(object = tree_mod_03, 
-             newdata = test_data_tree,
+             newdata = test_data,
              type = "class")
 
 # Compare classification error - using ModelMetrics library
@@ -1267,13 +1319,61 @@ What insights have we discovered and can confidently report to our stakeholders?
 
 ```{r What is the economic impact of such a high churn rate for fiber optic product?}
 
-df %>% 
-  filter(Churn == "Yes" & InternetService == "Fiber optic") %>% 
-  summarize(lost_revenue = sum(TotalCharges))
-
 # If we plot lost revenue (churned customers) by internet service, this could help create a sense of urgency for your business stakeholders.
+
+df %>%
+  filter(Churn == 1) %>%
+  group_by(InternetService) %>%
+  summarize(churned_customers   = n(),
+            lost_monthly_rev    = sum(MonthlyCharges),
+            lost_annual_rev_est = sum(MonthlyCharges) * 12) %>%
+  arrange(desc(lost_annual_rev_est))
 
 ```
 
+```{r Lost revenue by internet service plot, fig.width=9, fig.height=4.5}
+
+lost_rev <- df %>%
+  filter(Churn == 1) %>%
+  group_by(InternetService) %>%
+  summarize(churned_customers   = n(),
+            lost_annual_rev_est = sum(MonthlyCharges) * 12) %>%
+  mutate(share     = lost_annual_rev_est / sum(lost_annual_rev_est),
+         cust_share = churned_customers / sum(churned_customers),
+         service   = dplyr::recode(InternetService, "No" = "No internet service"),
+         service   = fct_reorder(service, lost_annual_rev_est),
+         amount    = ifelse(lost_annual_rev_est >= 1e6,
+                            sprintf("$%.2fM", lost_annual_rev_est / 1e6),
+                            sprintf("$%.0fK", lost_annual_rev_est / 1e3)),
+         label     = sprintf("%s  ·  %.0f%% of total", amount, share * 100),
+         highlight = InternetService == "Fiber optic")
+
+fiber <- lost_rev %>% filter(InternetService == "Fiber optic")
+
+ggplot(lost_rev, aes(x = lost_annual_rev_est, y = service, fill = highlight)) +
+  geom_col(width = 0.6) +
+  geom_text(aes(label = label), hjust = -0.05, size = 3.8, colour = "#0b0b0b") +
+  scale_fill_manual(values = c(`TRUE` = "#2a78d6", `FALSE` = "#c9c8c3"), guide = "none") +
+  scale_x_continuous(labels = scales::label_dollar(scale = 1e-6, suffix = "M"),
+                     expand = expansion(mult = c(0, 0.35))) +
+  labs(title    = sprintf("Fiber optic churn costs an estimated %s a year", fiber$amount),
+       subtitle = "Estimated annual revenue lost from churned customers, by internet service",
+       x = NULL, y = NULL,
+       caption  = sprintf("Estimate = churned customers' monthly charges × 12.  Fiber optic is %.0f%% of churned customers but %.0f%% of lost revenue.",
+                          fiber$cust_share * 100, fiber$share * 100)) +
+  theme_minimal(base_size = 12) +
+  theme(plot.title.position = "plot",
+        plot.title    = element_text(face = "bold", size = 15),
+        plot.subtitle = element_text(colour = "#52514e", margin = ggplot2::margin(b = 10)),
+        plot.caption  = element_text(colour = "#52514e", hjust = 0),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor   = element_blank(),
+        axis.text.y        = element_text(colour = "#0b0b0b", size = 11))
+```
+
+
+
+Fiber optic customers make up about 69% of churned customers (1,297 of 1,869), but about 82% of the estimated lost revenue ($1.37M of roughly $1.67M a year).
+The gap comes from price. Churned fiber customers paid about $88/month on average, compared with about $49 for DSL and $20 with no internet service. So fiber loses more customers, and each one it loses is worth almost twice as much as a DSL customer.
 
 Now, you have a good starting point to present your findings & insights to stakeholders, but this is only the beginning. Currently, you only have a strong hypotheses so now you need to validate and test what you have uncovered. You may need to do more research or data to do this as you may need to uncover the root causes.
